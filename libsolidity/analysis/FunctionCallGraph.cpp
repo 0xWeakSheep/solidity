@@ -178,6 +178,23 @@ bool FunctionCallGraphBuilder::visit(MemberAccess const& _memberAccess)
 			m_graph.bytecodeDependency.emplace(&accessedContractType.contractDefinition(), &_memberAccess);
 		}
 
+	// Handle .selector property access (not function calls named "selector") - the result type is bytes4, not FunctionType
+	if (memberName == "selector" && !dynamic_cast<FunctionType const*>(_memberAccess.annotation().type))
+		// Check if we're accessing .selector on a function type
+		if (auto const* exprFunctionType = dynamic_cast<FunctionType const*>(exprType))
+			// Only track internal functions (they need internal function IDs)
+			if (exprFunctionType->kind() == FunctionType::Kind::Internal)
+			{
+				// Ensure we have a concrete function definition
+				if (auto const* functionDef = dynamic_cast<FunctionDefinition const*>(&exprFunctionType->declaration()))
+				{
+					// Add function to call graph so it gets assigned an internal function ID
+					functionReferenced(*functionDef, false);
+					return true;
+				}
+			}
+
+
 	auto functionType = dynamic_cast<FunctionType const*>(_memberAccess.annotation().type);
 	auto functionDef = dynamic_cast<FunctionDefinition const*>(_memberAccess.annotation().referencedDeclaration);
 	if (!functionType || !functionDef || functionType->kind() != FunctionType::Kind::Internal)
