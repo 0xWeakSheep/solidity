@@ -561,6 +561,20 @@ bool DeclarationRegistrationHelper::registerDeclaration(
 			);
 	}
 
+	if (
+		TokenTraits::isFutureSolidityKeyword(name) ||
+		TokenTraits::isFutureYulKeyword(name)
+	)
+		_errorReporter.warning(
+			6335_error,
+			_declaration.location(),
+			fmt::format(
+				"\"{}\" will be promoted to keyword in the next breaking version"
+				" and will not be allowed as an identifier anymore.",
+				name
+			)
+		);
+
 	if (!_container.registerDeclaration(_declaration, _name, _errorLocation, !_declaration.isVisibleInContract() || _inactive, false))
 	{
 		SourceLocation firstDeclarationLocation;
