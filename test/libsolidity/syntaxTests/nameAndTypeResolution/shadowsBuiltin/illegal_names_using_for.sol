@@ -26,7 +26,9 @@ contract C {
 }
 // ----
 // DeclarationError 3726: (56-84): The name "super" is reserved.
+// Warning 6335: (56-84): "super" will be promoted to keyword in the next breaking version and will not be allowed as an identifier anymore.
 // DeclarationError 3726: (95-122): The name "this" is reserved.
+// Warning 6335: (95-122): "this" will be promoted to keyword in the next breaking version and will not be allowed as an identifier anymore.
 // DeclarationError 3726: (133-157): The name "_" is reserved.
 // Warning 2319: (56-84): This declaration shadows a builtin symbol.
 // Warning 2319: (95-122): This declaration shadows a builtin symbol.
