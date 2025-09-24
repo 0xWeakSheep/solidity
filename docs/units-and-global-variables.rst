@@ -436,3 +436,11 @@ These keywords are reserved in Solidity. They might become part of the syntax in
 ``mutable``, ``null``, ``of``, ``partial``, ``promise``, ``reference``, ``relocatable``,
 ``sealed``, ``sizeof``, ``static``, ``supports``, ``switch``, ``typedef``, ``typeof``,
 ``var``.
+
+.. note::
+    The following identifiers will become keywords in the future and will no longer be usable as names:
+    ``at``, ``error``, ``layout``, ``leave`` (Yul), ``super``, ``transient``, ``this``.
+
+    There are also names which will be considered Yul reserved identifiers in the future:
+    ``basefee``, ``blobbasefee``, ``blobhash``, ``clz``, ``memoryguard``, ``mcopy``, ``prevrandao``, ``tload``, ``tstore``.
+
