@@ -2,6 +2,8 @@
 
 Language Features:
 * General: Add a builtin that computes the base slot of a storage namespace using the `erc7201` formula from ERC-7201.
+* NameAndTypeResolver: Warn about identifiers selected for future promotion to Solidity keywords.
+* Yul Analyzer: Warn about identifiers selected for future promotion to Yul keywords.
 
 Compiler Features:
 * Commandline Interface: Disallow selecting the deprecated assembly input mode that was only accessible via `--assemble` instead of treating it as equivalent to `--strict-assembly`.
