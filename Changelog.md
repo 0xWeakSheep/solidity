@@ -5,6 +5,7 @@ Language Features:
 Compiler Features:
 
 Bugfixes:
+* FunctionCallGraphBuilder: Fix crash when declaring function selector of parent class as public constant.
 
 
 ### 0.8.33 (2025-12-18)
