@@ -2911,10 +2911,19 @@ void IRGeneratorForStatements::assignInternalFunctionIDIfNotCalledDirectly(
 	if (_expression.annotation().calledDirectly)
 		return;
 
-	define(IRVariable(_expression).part("functionIdentifier")) <<
-		std::to_string(m_context.mostDerivedContract().annotation().internalFunctionIDs.at(&_referencedFunction)) <<
-		"\n";
-	m_context.addToInternalDispatch(_referencedFunction);
+	auto const functionIDIt =
+		m_context.mostDerivedContract().annotation().internalFunctionIDs.find(&_referencedFunction);
+	// If referenced function pointer does not have internal function ID, it means that it is never called/used
+	// internally. It can happen i.e. when only function selector is accessed in the code, and it is being used to
+	// initialize a constant (compile-time) variable. In this case there is no need to create internal function ID and
+	// adding it to internal dispatch, because selector is calculated in compile-time.
+	if (functionIDIt != m_context.mostDerivedContract().annotation().internalFunctionIDs.end())
+	{
+		define(IRVariable(_expression).part("functionIdentifier")) <<
+			std::to_string(functionIDIt->second) <<
+			"\n";
+		m_context.addToInternalDispatch(_referencedFunction);
+	}
 }
 
 IRVariable IRGeneratorForStatements::convert(IRVariable const& _from, Type const& _to)
