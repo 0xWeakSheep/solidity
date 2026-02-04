@@ -2766,7 +2766,24 @@ std::string TupleType::richIdentifier() const
 bool TupleType::operator==(Type const& _other) const
 {
 	if (auto tupleType = dynamic_cast<TupleType const*>(&_other))
-		return components() == tupleType->components();
+	{
+		if (components().size() != tupleType->components().size())
+			return false;
+
+		for (size_t i = 0; i < components().size(); ++i)
+		{
+			// Components can be null. I.e., when (int t, , ) = (i, 0, 0);
+			if (components()[i] && tupleType->components()[i])
+			{
+				if (*components()[i] != *tupleType->components()[i])
+					return false;
+			}
+			else if (components()[i] != tupleType->components()[i])
+				return false;
+		}
+
+		return true;
+	}
 	else
 		return false;
 }
