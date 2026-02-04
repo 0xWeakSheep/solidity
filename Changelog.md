@@ -13,6 +13,8 @@ Compiler Features:
 
 Bugfixes:
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
+* TypeChecker: Remove the wrong codegen assumption that a conversion between non-byte calldata arrays can never happen.
+* TypeChecker: Fix tuple components types comparison for non-trivial types. This bug led to unnecessary conversions between tuples of the same types.
 
 
 ### 0.8.34 (2026-02-18)
