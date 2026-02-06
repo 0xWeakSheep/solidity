@@ -3287,7 +3287,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	accessedMemberAnnotation.referencedDeclaration = possibleMembers.front().declaration;
 	accessedMemberAnnotation.type = possibleMembers.front().type;
 
-	// TODO: Explain
+	// Lookup type required to find the function declaration. Set default to `static`.
 	VirtualLookup requiredLookup = VirtualLookup::Static;
 
 	if (auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
@@ -3523,7 +3523,8 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 
 	accessedMemberAnnotation.isLValue = isAccessedMemberLValue;
 
-	// TODO: Leave it for now, but it should be moved to TypeType -> Contract case
+	// TODO: Leave it for now, but it should be moved to TypeType -> Contract case.
+	// We do not want to change the logic in refactor PR.
 	if (
 		auto const* varDecl = dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration);
 		!accessedMemberAnnotation.isPure.set() &&
