@@ -36,9 +36,7 @@
 #include <libsolutil/Algorithms.h>
 #include <libsolutil/StringUtils.h>
 #include <libsolutil/Views.h>
-#include <libsolutil/Visitor.h>
 
-#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <fmt/format.h>
@@ -3295,6 +3293,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 
 	// It is going to be assigned to `accessedMemberAnnotation.isLValue` after the switch.
 	bool isAccessedMemberLValue = false;
+	// Switch through all possible categories of the expression object type.
 	switch (expressionObjectType->category())
 	{
 	case Type::Category::Address:
@@ -3320,7 +3319,36 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(expressionObjectType)->dataStoredIn(DataLocation::CallData);
 		break;
 	case Type::Category::Function:
+	{
+		if (
+			auto const* expressionObjectFunctionType = reinterpret_cast<FunctionType const*>(expressionObjectType);
+			expressionObjectFunctionType->hasDeclaration() &&
+			memberName == "selector"
+		)
+		{
+			if (dynamic_cast<FunctionDefinition const*>(&expressionObjectFunctionType->declaration()))
+			{
+				if (auto const* memberAccessParent = dynamic_cast<MemberAccess const*>(&_memberAccess.expression()))
+				{
+					bool isPure = *memberAccessParent->expression().annotation().isPure;
+					// Accessing a function selector using `super|this.f.selector`.
+					if (auto const* exprInt = dynamic_cast<Identifier const*>(&memberAccessParent->expression()))
+						if (exprInt->name() == "this" || exprInt->name() == "super")
+							isPure = true;
+
+					accessedMemberAnnotation.isPure = isPure;
+				}
+			}
+			// In case of event or error definition, the selector is always compile-time constant, as it can be
+			// a keccak256 hash of the event signature or a function selector in case of an error.
+			else if (
+				dynamic_cast<EventDefinition const*>(&expressionObjectFunctionType->declaration()) ||
+				dynamic_cast<ErrorDefinition const*>(&expressionObjectFunctionType->declaration())
+			)
+				accessedMemberAnnotation.isPure = true;
+		}
 		break;
+	}
 	case Type::Category::Enum:
 		break;
 	case Type::Category::UserDefinedValueType:
@@ -3331,46 +3359,27 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		break;
 	case Type::Category::TypeType:
 	{
+		// TODO some members might be pure, but for example `address(0x123).balance` is not pure
+		// although every subexpression is, so leaving this limited for now.
 		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(expressionObjectType);
-		if (dynamic_cast<ContractType const*>(expressionObjectTypeType->actualType()))
+		switch (expressionObjectTypeType->actualType()->category())
 		{
-			isAccessedMemberLValue = accessedMemberAnnotation.referencedDeclaration->isLValue();
-			if (
-				auto const* accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type);
-				accessedMemberFunctionType &&
-				accessedMemberFunctionType->kind() == FunctionType::Kind::Declaration
-			)
-				accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
-		}
-		break;
-	}
-	case Type::Category::Modifier:
-		break;
-	case Type::Category::Magic:
-		break;
-	case Type::Category::Module:
-		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
-		break;
-	case Type::Category::InaccessibleDynamic:
-		break;
-	}
-
-	accessedMemberAnnotation.isLValue = isAccessedMemberLValue;
-
-	// TODO some members might be pure, but for example `address(0x123).balance` is not pure
-	// although every subexpression is, so leaving this limited for now.
-	if (auto tt = dynamic_cast<TypeType const*>(expressionObjectType))
-	{
-		if (
-			tt->actualType()->category() == Type::Category::Enum ||
-			tt->actualType()->category() == Type::Category::UserDefinedValueType
-		)
-			accessedMemberAnnotation.isPure = true;
-
-		// `concat` purity depends also on its arguments, but this is checked later, in visit(FunctionCall...)
-		// This covers `bytes.concat` and `string.concat`.
-		if (tt->actualType()->category() == Type::Category::Array)
+		case Type::Category::Address:
+			break;
+		case Type::Category::Integer:
+			break;
+		case Type::Category::RationalNumber:
+			break;
+		case Type::Category::StringLiteral:
+			break;
+		case Type::Category::Bool:
+			break;
+		case Type::Category::FixedPoint:
+			break;
+		case Type::Category::Array:
 		{
+			// `concat` purity depends also on its arguments, but this is checked later, in visit(FunctionCall...)
+			// This covers `bytes.concat` and `string.concat`.
 			if (
 				auto const* funcType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type);
 				funcType &&
@@ -3380,76 +3389,60 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 				)
 			)
 				accessedMemberAnnotation.isPure = true;
+			else
+				solAssert(false, "Impossible function type for array TypeType ");
+
+			break;
 		}
-	}
-	if (
-		auto const* functionType = dynamic_cast<FunctionType const*>(expressionObjectType);
-		functionType &&
-		functionType->hasDeclaration() &&
-		memberName == "selector"
-	)
-	{
-		if (dynamic_cast<FunctionDefinition const*>(&functionType->declaration()))
+		case Type::Category::ArraySlice:
+			break;
+		case Type::Category::FixedBytes:
+			break;
+		case Type::Category::Contract:
 		{
-			if (auto const* parentAccess = dynamic_cast<MemberAccess const*>(&_memberAccess.expression()))
-			{
-				bool isPure = *parentAccess->expression().annotation().isPure;
-				// Accessing a function selector using `super|this.f.selector`.
-				if (auto const* exprInt = dynamic_cast<Identifier const*>(&parentAccess->expression()))
-					if (exprInt->name() == "this" || exprInt->name() == "super")
-						isPure = true;
-
-				accessedMemberAnnotation.isPure = isPure;
-			}
-		}
-		// In case of event or error definition the selector is always compile-time constant, as it can be
-		// a keccak256 hash of the event signature or a function selector in case of an error.
-		else if (
-			dynamic_cast<EventDefinition const*>(&functionType->declaration()) ||
-			dynamic_cast<ErrorDefinition const*>(&functionType->declaration())
-		)
-			accessedMemberAnnotation.isPure = true;
-	}
-
-	if (
-		auto const* varDecl = dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration);
-		!accessedMemberAnnotation.isPure.set() &&
-		varDecl &&
-		varDecl->isConstant()
-	)
-		accessedMemberAnnotation.isPure = true;
-
-	if (auto magicType = dynamic_cast<MagicType const*>(expressionObjectType))
-	{
-		if (magicType->kind() == MagicType::Kind::ABI)
-			accessedMemberAnnotation.isPure = true;
-		else if (magicType->kind() == MagicType::Kind::MetaType && (
-			memberName == "creationCode" || memberName == "runtimeCode"
-		))
-		{
-			accessedMemberAnnotation.isPure = true;
-			ContractType const& accessedContractType = dynamic_cast<ContractType const&>(*magicType->typeArgument());
-			solAssert(!accessedContractType.isSuper(), "");
+			isAccessedMemberLValue = accessedMemberAnnotation.referencedDeclaration->isLValue();
 			if (
-				memberName == "runtimeCode" &&
-				!accessedContractType.immutableVariables().empty()
+				auto const* accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type);
+				accessedMemberFunctionType &&
+				accessedMemberFunctionType->kind() == FunctionType::Kind::Declaration
 			)
-				m_errorReporter.typeError(
-					9274_error,
-					_memberAccess.location(),
-					"\"runtimeCode\" is not available for contracts containing immutable variables."
-				);
+				accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
+			break;
 		}
-		else if (magicType->kind() == MagicType::Kind::MetaType && memberName == "name")
+		case Type::Category::Struct:
+			break;
+		case Type::Category::Function:
+			break;
+		case Type::Category::Enum:
+		case Type::Category::UserDefinedValueType:
 			accessedMemberAnnotation.isPure = true;
-		else if (magicType->kind() == MagicType::Kind::MetaType && memberName == "interfaceId")
-			accessedMemberAnnotation.isPure = true;
-		else if (
-			magicType->kind() == MagicType::Kind::MetaType &&
-			(memberName == "min" || memberName == "max")
-		)
-			accessedMemberAnnotation.isPure = true;
-		else if (magicType->kind() == MagicType::Kind::Block)
+			break;
+		case Type::Category::Tuple:
+			break;
+		case Type::Category::Mapping:
+			break;
+		case Type::Category::TypeType:
+			break;
+		case Type::Category::Modifier:
+			break;
+		case Type::Category::Magic:
+			break;
+		case Type::Category::Module:
+			break;
+		case Type::Category::InaccessibleDynamic:
+			break;
+		}
+		break;
+	}
+	case Type::Category::Modifier:
+		break;
+	case Type::Category::Magic:
+	{
+		auto const* expressionObjectMagicType = reinterpret_cast<MagicType const*>(expressionObjectType);
+
+		switch (expressionObjectMagicType->kind())
+		{
+		case MagicType::Kind::Block:
 		{
 			if (memberName == "chainid" && !m_evmVersion.hasChainID())
 				m_errorReporter.typeError(
@@ -3481,8 +3474,59 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 					_memberAccess.location(),
 					"Since the VM version paris, \"difficulty\" was replaced by \"prevrandao\", which now returns a random number based on the beacon chain."
 				);
+			break;
 		}
+		case MagicType::Kind::Message:
+			break;
+		case MagicType::Kind::Transaction:
+			break;
+		case MagicType::Kind::ABI:
+			accessedMemberAnnotation.isPure = true;
+			break;
+		case MagicType::Kind::Error:
+			break;
+		case MagicType::Kind::MetaType:
+			if (memberName == "creationCode" || memberName == "runtimeCode")
+			{
+				accessedMemberAnnotation.isPure = true;
+				ContractType const& accessedContractType = dynamic_cast<ContractType const&>(*expressionObjectMagicType->typeArgument());
+				solAssert(!accessedContractType.isSuper(), "");
+				if (
+					memberName == "runtimeCode" &&
+					!accessedContractType.immutableVariables().empty()
+				)
+					m_errorReporter.typeError(
+						9274_error,
+						_memberAccess.location(),
+						"\"runtimeCode\" is not available for contracts containing immutable variables."
+					);
+			} else if (
+				memberName == "name" ||
+				memberName == "interfaceId" ||
+				memberName == "min" ||
+				memberName == "max"
+			)
+				accessedMemberAnnotation.isPure = true;
+			break;
+		}
+		break;
 	}
+	case Type::Category::Module:
+		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
+		break;
+	case Type::Category::InaccessibleDynamic:
+		break;
+	}
+
+	accessedMemberAnnotation.isLValue = isAccessedMemberLValue;
+
+	if (
+		auto const* varDecl = dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration);
+		!accessedMemberAnnotation.isPure.set() &&
+		varDecl &&
+		varDecl->isConstant()
+	)
+		accessedMemberAnnotation.isPure = true;
 
 	if (
 		_memberAccess.expression().annotation().type->category() == Type::Category::Address &&
