@@ -3471,9 +3471,15 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	case Type::Category::Module:
 		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
 		break;
-
-	// Empty cases.
 	case Type::Category::Address:
+		if (memberName == "codehash" && !m_evmVersion.hasExtCodeHash())
+			m_errorReporter.typeError(
+				7598_error,
+				_memberAccess.location(),
+				"\"codehash\" is not supported by the VM version."
+			);
+		break;
+	// Empty cases.
 	case Type::Category::Integer:
 	case Type::Category::RationalNumber:
 	case Type::Category::StringLiteral:
@@ -3502,17 +3508,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		varDecl->isConstant()
 	)
 		accessedMemberAnnotation.isPure = true;
-
-	if (
-		_memberAccess.expression().annotation().type->category() == Type::Category::Address &&
-		memberName == "codehash" &&
-		!m_evmVersion.hasExtCodeHash()
-	)
-		m_errorReporter.typeError(
-			7598_error,
-			_memberAccess.location(),
-			"\"codehash\" is not supported by the VM version."
-		);
 
 	if (!accessedMemberAnnotation.isPure.set())
 		accessedMemberAnnotation.isPure = false;
