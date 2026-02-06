@@ -191,28 +191,52 @@ private:
 			return m_currentSourceUnit;
 	}
 
+	/// MemberAccess visitor helpers:
+	///
+	/// Resolves overloaded functions by filtering out inapplicable candidates based on the provided arguments
+	/// and the object type of the expression. This process ensures that only valid functions from the given set
+	/// of possible members remain, based on argument compatibility and type constraints.
+	/// @param _expressionObjectType The type of the object on which the member function is invoked.
+	/// @param _possibleMembers A map of possible member functions of the object. This map will be modified in-place,
+	///                          removing members that do not match the provided arguments or object type.
+	/// @param _arguments The list of arguments provided in the function call, used to validate compatibility with
+	/// candidate members.
 	void performOverloadedResolution(
 		Type const* _expressionObjectType,
 		MemberList::MemberMap& _possibleMembers,
 		FuncCallArguments const& _arguments
 	) const;
 
+	/// Handles errors related to accessing unresolved members.
+	/// Collects and processes errors for member access operations where the member could not be resolved.
+	/// @param _memberAccess The member access expression where the unresolved member access occurred.
+	/// @param _expressionObjectType The type of the object being accessed.
+	/// @param _memberName The name of the member that could not be resolved.
+	/// @param _possibleMemberCountBeforeOverloading The initial count of possible members before overloading resolution.
 	void handleUnresolvedMemberAccessErrors(
 		MemberAccess const& _memberAccess,
 		Type const* _expressionObjectType,
 		ASTString const& _memberName,
-		size_t _initialMemberCount
+		size_t _possibleMemberCountBeforeOverloading
 	) const;
 
+	/// Validates access to a member function of a given type, ensuring that the invocation
+	/// is consistent with the expected types and semantics. Reports errors and warnings
+	/// for invalid access, use of deprecated features, and unsupported operations.
+	/// @param _accessedMemberFunctionType The type of the member function that is being accessed.
+	/// @param _expressionObjectType The type of the object on which the member function is accessed.
+	/// @param _memberName The name of the member function being accessed.
+	/// @param _location The source location where the member function is accessed.
+	/// @param _hasArguments Indicates whether the member function is accessed without arguments.
+	/// @param _isDefined Specifies if the member function is fully defined or abstract.
 	void validateAccessMemberFunctionType(
 		FunctionType const* _accessedMemberFunctionType,
 		Type const* _expressionObjectType,
 		ASTString const& _memberName,
 		langutil::SourceLocation const& _location,
-		bool _emptyArguments,
+		bool _hasArguments,
 		bool _isDefined
 	) const;
-
 
 	SourceUnit const* m_currentSourceUnit = nullptr;
 	ContractDefinition const* m_currentContract = nullptr;
