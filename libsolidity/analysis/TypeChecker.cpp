@@ -3293,6 +3293,8 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 
 	accessedMemberAnnotation.requiredLookup = requiredLookup;
 
+	// It is going to be assigned to `accessedMemberAnnotation.isLValue` after the switch.
+	bool isAccessedMemberLValue = false;
 	switch (expressionObjectType->category())
 	{
 	case Type::Category::Address:
@@ -3307,15 +3309,15 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		break;
 	case Type::Category::FixedPoint:
 		break;
+	case Type::Category::FixedBytes:
 	case Type::Category::Array:
 		break;
 	case Type::Category::ArraySlice:
 		break;
-	case Type::Category::FixedBytes:
-		break;
 	case Type::Category::Contract:
 		break;
 	case Type::Category::Struct:
+		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(expressionObjectType)->dataStoredIn(DataLocation::CallData);
 		break;
 	case Type::Category::Function:
 		break;
@@ -3328,45 +3330,32 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	case Type::Category::Mapping:
 		break;
 	case Type::Category::TypeType:
+	{
+		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(expressionObjectType);
+		if (dynamic_cast<ContractType const*>(expressionObjectTypeType->actualType()))
+		{
+			isAccessedMemberLValue = accessedMemberAnnotation.referencedDeclaration->isLValue();
+			if (
+				auto const* accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type);
+				accessedMemberFunctionType &&
+				accessedMemberFunctionType->kind() == FunctionType::Kind::Declaration
+			)
+				accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
+		}
 		break;
+	}
 	case Type::Category::Modifier:
 		break;
 	case Type::Category::Magic:
 		break;
 	case Type::Category::Module:
+		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
 		break;
 	case Type::Category::InaccessibleDynamic:
 		break;
 	}
 
-	if (auto const* structType = dynamic_cast<StructType const*>(expressionObjectType))
-		accessedMemberAnnotation.isLValue = !structType->dataStoredIn(DataLocation::CallData);
-	else if (expressionObjectType->category() == Type::Category::Array)
-		accessedMemberAnnotation.isLValue = false;
-	else if (expressionObjectType->category() == Type::Category::FixedBytes)
-		accessedMemberAnnotation.isLValue = false;
-	else if (TypeType const* typeType = dynamic_cast<decltype(typeType)>(expressionObjectType))
-	{
-		if (ContractType const* contractType = dynamic_cast<decltype(contractType)>(typeType->actualType()))
-		{
-			accessedMemberAnnotation.isLValue = accessedMemberAnnotation.referencedDeclaration->isLValue();
-			if (
-				auto const* functionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type);
-				functionType &&
-				functionType->kind() == FunctionType::Kind::Declaration
-			)
-				accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
-		}
-		else
-			accessedMemberAnnotation.isLValue = false;
-	}
-	else if (expressionObjectType->category() == Type::Category::Module)
-	{
-		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
-		accessedMemberAnnotation.isLValue = false;
-	}
-	else
-		accessedMemberAnnotation.isLValue = false;
+	accessedMemberAnnotation.isLValue = isAccessedMemberLValue;
 
 	// TODO some members might be pure, but for example `address(0x123).balance` is not pure
 	// although every subexpression is, so leaving this limited for now.
