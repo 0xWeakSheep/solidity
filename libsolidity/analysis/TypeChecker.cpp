@@ -3296,25 +3296,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	// Switch through all possible categories of the expression object type.
 	switch (expressionObjectType->category())
 	{
-	case Type::Category::Address:
-		break;
-	case Type::Category::Integer:
-		break;
-	case Type::Category::RationalNumber:
-		break;
-	case Type::Category::StringLiteral:
-		break;
-	case Type::Category::Bool:
-		break;
-	case Type::Category::FixedPoint:
-		break;
-	case Type::Category::FixedBytes:
-	case Type::Category::Array:
-		break;
-	case Type::Category::ArraySlice:
-		break;
-	case Type::Category::Contract:
-		break;
 	case Type::Category::Struct:
 		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(expressionObjectType)->dataStoredIn(DataLocation::CallData);
 		break;
@@ -3349,14 +3330,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		}
 		break;
 	}
-	case Type::Category::Enum:
-		break;
-	case Type::Category::UserDefinedValueType:
-		break;
-	case Type::Category::Tuple:
-		break;
-	case Type::Category::Mapping:
-		break;
 	case Type::Category::TypeType:
 	{
 		// TODO some members might be pure, but for example `address(0x123).balance` is not pure
@@ -3364,18 +3337,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(expressionObjectType);
 		switch (expressionObjectTypeType->actualType()->category())
 		{
-		case Type::Category::Address:
-			break;
-		case Type::Category::Integer:
-			break;
-		case Type::Category::RationalNumber:
-			break;
-		case Type::Category::StringLiteral:
-			break;
-		case Type::Category::Bool:
-			break;
-		case Type::Category::FixedPoint:
-			break;
 		case Type::Category::Array:
 		{
 			// `concat` purity depends also on its arguments, but this is checked later, in visit(FunctionCall...)
@@ -3394,10 +3355,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 
 			break;
 		}
-		case Type::Category::ArraySlice:
-			break;
-		case Type::Category::FixedBytes:
-			break;
 		case Type::Category::Contract:
 		{
 			isAccessedMemberLValue = accessedMemberAnnotation.referencedDeclaration->isLValue();
@@ -3409,33 +3366,32 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 				accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
 			break;
 		}
-		case Type::Category::Struct:
-			break;
-		case Type::Category::Function:
-			break;
 		case Type::Category::Enum:
 		case Type::Category::UserDefinedValueType:
 			accessedMemberAnnotation.isPure = true;
 			break;
+		// Empty cases.
+		case Type::Category::Address:
+		case Type::Category::Integer:
+		case Type::Category::RationalNumber:
+		case Type::Category::StringLiteral:
+		case Type::Category::Bool:
+		case Type::Category::FixedPoint:
+		case Type::Category::ArraySlice:
+		case Type::Category::FixedBytes:
+		case Type::Category::Struct:
+		case Type::Category::Function:
 		case Type::Category::Tuple:
-			break;
 		case Type::Category::Mapping:
-			break;
 		case Type::Category::TypeType:
-			break;
 		case Type::Category::Modifier:
-			break;
 		case Type::Category::Magic:
-			break;
 		case Type::Category::Module:
-			break;
 		case Type::Category::InaccessibleDynamic:
 			break;
 		}
 		break;
 	}
-	case Type::Category::Modifier:
-		break;
 	case Type::Category::Magic:
 	{
 		auto const* expressionObjectMagicType = reinterpret_cast<MagicType const*>(expressionObjectType);
@@ -3476,16 +3432,11 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 				);
 			break;
 		}
-		case MagicType::Kind::Message:
-			break;
-		case MagicType::Kind::Transaction:
-			break;
 		case MagicType::Kind::ABI:
 			accessedMemberAnnotation.isPure = true;
 			break;
-		case MagicType::Kind::Error:
-			break;
 		case MagicType::Kind::MetaType:
+		{
 			if (memberName == "creationCode" || memberName == "runtimeCode")
 			{
 				accessedMemberAnnotation.isPure = true;
@@ -3509,17 +3460,41 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 				accessedMemberAnnotation.isPure = true;
 			break;
 		}
+		// Empty cases.
+		case MagicType::Kind::Message:
+		case MagicType::Kind::Transaction:
+		case MagicType::Kind::Error:
+			break;
+		}
 		break;
 	}
 	case Type::Category::Module:
 		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
 		break;
+
+	// Empty cases.
+	case Type::Category::Address:
+	case Type::Category::Integer:
+	case Type::Category::RationalNumber:
+	case Type::Category::StringLiteral:
+	case Type::Category::Bool:
+	case Type::Category::FixedPoint:
+	case Type::Category::FixedBytes:
+	case Type::Category::Array:
+	case Type::Category::ArraySlice:
+	case Type::Category::Contract:
+	case Type::Category::Enum:
+	case Type::Category::UserDefinedValueType:
+	case Type::Category::Tuple:
+	case Type::Category::Mapping:
+	case Type::Category::Modifier:
 	case Type::Category::InaccessibleDynamic:
 		break;
 	}
 
 	accessedMemberAnnotation.isLValue = isAccessedMemberLValue;
 
+	// TODO: Leave it for now, but it should be moved to TypeType -> Contract case
 	if (
 		auto const* varDecl = dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration);
 		!accessedMemberAnnotation.isPure.set() &&
