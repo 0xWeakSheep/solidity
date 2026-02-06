@@ -3198,6 +3198,59 @@ void TypeChecker::handleUnresolvedMemberAccessErrors(
 	);
 }
 
+void TypeChecker::validateAccessMemberFunctionType(
+	FunctionType const* _accessedMemberFunctionType,
+	Type const* _expressionObjectType,
+	ASTString const& _memberName,
+	SourceLocation const& _location,
+	bool _emptyArguments,
+	bool _isDefined
+) const
+{
+	solAssert(
+		!_accessedMemberFunctionType->hasBoundFirstArgument() ||
+		_expressionObjectType->isImplicitlyConvertibleTo(*_accessedMemberFunctionType->selfType()),
+		"Function \"" + _memberName + "\" cannot be called on an object of type " +
+		_expressionObjectType->humanReadableName() +
+		" (expected " + _accessedMemberFunctionType->selfType()->humanReadableName() + ")."
+	);
+
+	if (
+		dynamic_cast<FunctionType const*>(_expressionObjectType) &&
+		!_isDefined &&
+		(_memberName == "value" || _memberName == "gas")
+	)
+		m_errorReporter.typeError(
+			1621_error,
+			_location,
+			"Using \"." + _memberName + "(...)\" is deprecated. Use \"{" + _memberName + ": ...}\" instead."
+		);
+
+	if (
+		_accessedMemberFunctionType->kind() == FunctionType::Kind::ArrayPush &&
+		!_emptyArguments &&
+		_expressionObjectType->containsNestedMapping()
+	)
+		m_errorReporter.typeError(
+			8871_error,
+			_location,
+			"Storage arrays with nested mappings do not support .push(<arg>)."
+		);
+
+	if (
+		_accessedMemberFunctionType->kind() == FunctionType::Kind::Send ||
+		_accessedMemberFunctionType->kind() == FunctionType::Kind::Transfer
+	)
+		m_errorReporter.warning(
+			9207_error,
+			_location,
+			fmt::format(
+				"'{}' is deprecated and scheduled for removal. Use 'call{{value: <amount>}}(\"\")' instead.",
+				_accessedMemberFunctionType->kind() == FunctionType::Kind::Send ? "send" : "transfer"
+			)
+		);
+}
+
 bool TypeChecker::visit(MemberAccess const& _memberAccess)
 {
 	_memberAccess.expression().accept(*this);
@@ -3237,37 +3290,10 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	// TODO: Explain
 	VirtualLookup requiredLookup = VirtualLookup::Static;
 
-	if (auto funType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
+	if (auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
 	{
-		solAssert(
-			!funType->hasBoundFirstArgument() || expressionObjectType->isImplicitlyConvertibleTo(*funType->selfType()),
-			"Function \"" + memberName + "\" cannot be called on an object of type " +
-			expressionObjectType->humanReadableName() + " (expected " + funType->selfType()->humanReadableName() + ")."
-		);
-
-		if (
-			dynamic_cast<FunctionType const*>(expressionObjectType) &&
-			!accessedMemberAnnotation.referencedDeclaration &&
-			(memberName == "value" || memberName == "gas")
-		)
-			m_errorReporter.typeError(
-				1621_error,
-				_memberAccess.location(),
-				"Using \"." + memberName + "(...)\" is deprecated. Use \"{" + memberName + ": ...}\" instead."
-			);
-
-		if (
-			funType->kind() == FunctionType::Kind::ArrayPush &&
-			arguments.value().numArguments() != 0 &&
-			expressionObjectType->containsNestedMapping()
-		)
-			m_errorReporter.typeError(
-				8871_error,
-				_memberAccess.location(),
-				"Storage arrays with nested mappings do not support .push(<arg>)."
-			);
-
-		if (!funType->hasBoundFirstArgument())
+		// Update required lookup
+		if (!accessedMemberFunctionType->hasBoundFirstArgument())
 			if (auto typeType = dynamic_cast<TypeType const*>(expressionObjectType))
 			{
 				auto contractType = dynamic_cast<ContractType const*>(typeType->actualType());
@@ -3275,18 +3301,15 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 					requiredLookup = VirtualLookup::Super;
 			}
 
-		if (
-			funType->kind() == FunctionType::Kind::Send ||
-			funType->kind() == FunctionType::Kind::Transfer
-		)
-			m_errorReporter.warning(
-				9207_error,
-				_memberAccess.location(),
-				fmt::format(
-					"'{}' is deprecated and scheduled for removal. Use 'call{{value: <amount>}}(\"\")' instead.",
-					funType->kind() == FunctionType::Kind::Send ? "send" : "transfer"
-				)
-			);
+		// Validate an accessed member function type.
+		validateAccessMemberFunctionType(
+			accessedMemberFunctionType,
+			expressionObjectType,
+			memberName,
+			_memberAccess.location(),
+			(*arguments).numArguments() == 0,
+			accessedMemberAnnotation.referencedDeclaration != nullptr
+		);
 	}
 
 	accessedMemberAnnotation.requiredLookup = requiredLookup;

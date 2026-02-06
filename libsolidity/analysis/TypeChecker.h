@@ -204,6 +204,16 @@ private:
 		size_t _initialMemberCount
 	) const;
 
+	void validateAccessMemberFunctionType(
+		FunctionType const* _accessedMemberFunctionType,
+		Type const* _expressionObjectType,
+		ASTString const& _memberName,
+		langutil::SourceLocation const& _location,
+		bool _emptyArguments,
+		bool _isDefined
+	) const;
+
+
 	SourceUnit const* m_currentSourceUnit = nullptr;
 	ContractDefinition const* m_currentContract = nullptr;
 
