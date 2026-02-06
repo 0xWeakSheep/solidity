@@ -191,6 +191,19 @@ private:
 			return m_currentSourceUnit;
 	}
 
+	void performOverloadedResolution(
+		Type const* _expressionObjectType,
+		MemberList::MemberMap& _possibleMembers,
+		FuncCallArguments const& _arguments
+	) const;
+
+	void handleUnresolvedMemberAccessErrors(
+		MemberAccess const& _memberAccess,
+		Type const* _expressionObjectType,
+		ASTString const& _memberName,
+		size_t _initialMemberCount
+	) const;
+
 	SourceUnit const* m_currentSourceUnit = nullptr;
 	ContractDefinition const* m_currentContract = nullptr;
 
