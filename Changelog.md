@@ -15,6 +15,7 @@ Compiler Features:
 Bugfixes:
 * Yul: Fix incorrect serialization of Yul object names containing double quotes and escape sequences, producing output that could not be parsed as valid Yul.
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
+* Yul IR Code Generation: Encode custom error named parameters in declaration order instead of call-site order when used from a `require` function. This bug did not affect `revert` with custom errors.
 
 
 ### 0.8.34 (2026-02-18)
