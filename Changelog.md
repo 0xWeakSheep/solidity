@@ -9,6 +9,9 @@ Compiler Features:
 * Standard JSON Interface: Introduce `settings.experimental` setting required for enabling the experimental mode.
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
 
+Important Bugfixes:
+* Evmasm Code Generator: Fix unchecked multiplication overflow when computing the storage size of dynamic arrays during deletion, which could result in `delete` silently leaving stale data in storage.
+
 Bugfixes:
 
 

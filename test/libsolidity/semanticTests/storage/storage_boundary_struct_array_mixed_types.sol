@@ -159,7 +159,7 @@ contract C {
 // gas legacyOptimized: 112505
 // deleteBoundaryArray()
 // gas irOptimized: 177968
-// gas legacy: 180995
+// gas legacy: 180988
 // gas legacyOptimized: 178182
 // canaryValue() -> 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 // boundaryArray() -> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
