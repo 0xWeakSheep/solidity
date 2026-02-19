@@ -22,6 +22,8 @@
 
 #include <libyul/optimiser/SSAValueTracker.h>
 
+#include <liblangutil/Exceptions.h>
+
 #include <libyul/AST.h>
 
 using namespace solidity;
@@ -31,10 +33,18 @@ void SSAValueTracker::operator()(Assignment const& _assignment)
 {
 	for (auto const& var: _assignment.variableNames)
 		m_values.erase(var.name);
+
+	for (auto const& var: _assignment.variableNames)
+		m_functionParameters.erase(var.name);
 }
 
 void SSAValueTracker::operator()(FunctionDefinition const& _funDef)
 {
+	solAssert(!m_functionParameters.contains(_funDef.name), "SSAValueTracker requires Disambiguator to run first");
+
+	for (auto const& param: _funDef.parameters)
+		m_functionParameters.insert(param.name);
+
 	for (auto const& var: _funDef.returnVariables)
 		setValue(var.name, nullptr);
 	ASTWalker::operator()(_funDef);
@@ -47,6 +57,35 @@ void SSAValueTracker::operator()(VariableDeclaration const& _varDecl)
 			setValue(var.name, nullptr);
 	else if (_varDecl.variables.size() == 1)
 		setValue(_varDecl.variables.front().name, _varDecl.value.get());
+}
+
+bool SSAValueTracker::isSSAWithDependencies(Expression const* _expression) const
+{
+	if (_expression == nullptr)
+		return true;
+
+	if (auto const* functionCall = std::get_if<FunctionCall>(_expression))
+	{
+		for (auto const& argument: functionCall->arguments)
+			if (!isSSAWithDependencies(&argument))
+				return false;
+
+		return true;
+	}
+	else if (auto const* identifier = std::get_if<Identifier>(_expression))
+	{
+		if (m_functionParameters.contains(identifier->name))
+			return true;
+
+		auto const it = m_values.find(identifier->name);
+		if (it == m_values.end())
+			return false;
+		return isSSAWithDependencies(it->second);
+	}
+	else
+		solAssert(std::holds_alternative<Literal>(*_expression), "Impossible expression type");
+
+	return true;
 }
 
 std::set<YulName> SSAValueTracker::ssaVariables(Block const& _ast)
