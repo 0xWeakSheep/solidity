@@ -311,6 +311,16 @@ YulOptimizerTestCommon::YulOptimizerTestCommon(std::shared_ptr<Object const> _ob
 			ExpressionJoiner::run(*m_context, block);
 			return block;
 		}},
+		{"unusedStoreEliminatorNoSsaTransform", [&]() {
+			auto block = disambiguate();
+			updateContext(block);
+			ForLoopInitRewriter::run(*m_context, block);
+			ExpressionSplitter::run(*m_context, block);
+			UnusedStoreEliminator::run(*m_context, block);
+			SSAReverser::run(*m_context, block);
+			ExpressionJoiner::run(*m_context, block);
+			return block;
+		}},
 		{"equalStoreEliminator", [&]() {
 			auto block = disambiguate();
 			updateContext(block);
