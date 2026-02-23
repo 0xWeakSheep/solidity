@@ -1855,6 +1855,7 @@
     },
     "0.8.12": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1869,6 +1870,7 @@
     },
     "0.8.13": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1884,6 +1886,7 @@
     },
     "0.8.14": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1897,6 +1900,7 @@
     },
     "0.8.15": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1908,6 +1912,7 @@
     },
     "0.8.16": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1918,6 +1923,7 @@
     },
     "0.8.17": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1927,6 +1933,7 @@
     },
     "0.8.18": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1936,6 +1943,7 @@
     },
     "0.8.19": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1960,6 +1968,7 @@
     },
     "0.8.20": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication",
             "FullInlinerNonExpressionSplitArgumentEvaluationOrder",
@@ -1969,6 +1978,7 @@
     },
     "0.8.21": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication"
         ],
@@ -1976,6 +1986,7 @@
     },
     "0.8.22": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow",
             "VerbatimInvalidDeduplication"
         ],
@@ -1983,36 +1994,42 @@
     },
     "0.8.23": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2023-11-08"
     },
     "0.8.24": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-01-25"
     },
     "0.8.25": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-03-14"
     },
     "0.8.26": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-05-21"
     },
     "0.8.27": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-09-04"
     },
     "0.8.28": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2020,6 +2037,7 @@
     },
     "0.8.29": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2041,6 +2059,7 @@
     },
     "0.8.30": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2048,6 +2067,7 @@
     },
     "0.8.31": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2055,18 +2075,22 @@
     },
     "0.8.32": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision"
         ],
         "released": "2025-12-18"
     },
     "0.8.33": {
         "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize",
             "TransientStorageClearingHelperCollision"
         ],
         "released": "2025-12-18"
     },
     "0.8.34": {
-        "bugs": [],
+        "bugs": [
+            "UnusedStoreEliminatorStaleReturnDataSize"
+        ],
         "released": "2026-02-18"
     },
     "0.8.4": {

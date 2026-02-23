@@ -1,5 +1,18 @@
 [
     {
+        "uid": "SOL-2026-2",
+        "name": "UnusedStoreEliminatorStaleReturnDataSize",
+        "summary": "The Yul optimizer's ``UnusedStoreEliminator`` may incorrectly remove ``returndatacopy`` operations when using a stale value from ``returndatasize()`` that was invalidated by subsequent call operations.",
+        "description": "The ``UnusedStoreEliminator`` is a Yul optimizer step that removes redundant memory and storage writes. It has a special optimization for ``returndatacopy(0, 0, returndatasize())``, which copies the entire return data buffer to memory. This operation can be removed if the start offset is zero and the length equals ``returndatasize()``, similar to other memory write operations. However, the check for this pattern did not account for ``returndatasize()`` values becoming stale. The size of the return data buffer is updated by ``CALL``, ``STATICCALL``, ``DELEGATECALL``, and ``CALLCODE`` opcodes. If a ``returndatasize()`` value is stored in a variable before such an operation and then used in a subsequent ``returndatacopy``, the stored size no longer reflects the actual return data buffer size. It should revert, if the stale return data size is greater then actual return data size. The optimizer would still consider it safe to remove, even though it may revert and should not be removed. This could lead to incorrect behavior when the code should revert but it does not. The bug only affects inline assembly or handwritten Yul code code that uses optimizer sequences including the ``UnusedStoreEliminator`` step, which is a part of default optimizer sequance",
+        "link": "https://blog.soliditylang.org/2026/X/Y/Z/",
+        "introduced": "0.8.12",
+        "fixed": "0.8.35",
+        "severity": "low",
+        "conditions": {
+            "yulOptimizer": true
+        }
+    },
+    {
         "uid": "SOL-2026-1",
         "name": "TransientStorageClearingHelperCollision",
         "summary": "Clearing both storage and transient storage variables in the same contract may result in only one of these locations being cleared.",
