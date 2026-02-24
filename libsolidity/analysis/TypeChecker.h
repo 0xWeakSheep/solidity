@@ -223,20 +223,8 @@ private:
 	/// Validates access to a member function of a given type, ensuring that the invocation
 	/// is consistent with the expected types and semantics. Reports errors and warnings
 	/// for invalid access, use of deprecated features, and unsupported operations.
-	/// @param _accessedMemberFunctionType The type of the member function that is being accessed.
-	/// @param _expressionObjectType The type of the object on which the member function is accessed.
-	/// @param _memberName The name of the member function being accessed.
-	/// @param _location The source location where the member function is accessed.
-	/// @param _hasArguments Indicates whether the member function is accessed without arguments.
-	/// @param _isDefined Specifies if the member function is fully defined or abstract.
-	void validateAccessMemberFunctionType(
-		FunctionType const* _accessedMemberFunctionType,
-		Type const* _expressionObjectType,
-		ASTString const& _memberName,
-		langutil::SourceLocation const& _location,
-		bool _hasArguments,
-		bool _isDefined
-	) const;
+	/// @param _memberAccess Member access expression.
+	void checkAccessedMemberFunction(MemberAccess const& _memberAccess) const;
 
 	SourceUnit const* m_currentSourceUnit = nullptr;
 	ContractDefinition const* m_currentContract = nullptr;

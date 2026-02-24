@@ -3198,55 +3198,57 @@ void TypeChecker::handleUnresolvedMemberAccessErrors(
 	);
 }
 
-void TypeChecker::validateAccessMemberFunctionType(
-	FunctionType const* _accessedMemberFunctionType,
-	Type const* _expressionObjectType,
-	ASTString const& _memberName,
-	SourceLocation const& _location,
-	bool _hasArguments,
-	bool _isDefined
-) const
+void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess) const
 {
+	auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(_memberAccess.annotation().type);
+	solAssert(accessedMemberFunctionType, "Expected function type.");
+
+	Type const* expressionObjectType = type(_memberAccess.expression());
+	solAssert(expressionObjectType);
+
+	SourceLocation const& location = _memberAccess.location();
+	auto const& memberName = _memberAccess.memberName();
+
 	solAssert(
-		!_accessedMemberFunctionType->hasBoundFirstArgument() ||
-		_expressionObjectType->isImplicitlyConvertibleTo(*_accessedMemberFunctionType->selfType()),
-		"Function \"" + _memberName + "\" cannot be called on an object of type " +
-		_expressionObjectType->humanReadableName() +
-		" (expected " + _accessedMemberFunctionType->selfType()->humanReadableName() + ")."
+		!accessedMemberFunctionType->hasBoundFirstArgument() ||
+		expressionObjectType->isImplicitlyConvertibleTo(*accessedMemberFunctionType->selfType()),
+		"Function \"" + memberName + "\" cannot be called on an object of type " +
+		expressionObjectType->humanReadableName() +
+		" (expected " + accessedMemberFunctionType->selfType()->humanReadableName() + ")."
 	);
 
 	if (
-		dynamic_cast<FunctionType const*>(_expressionObjectType) &&
-		!_isDefined &&
-		(_memberName == "value" || _memberName == "gas")
+		dynamic_cast<FunctionType const*>(expressionObjectType) &&
+		_memberAccess.annotation().referencedDeclaration == nullptr && // It's not defined
+		(memberName == "value" || memberName == "gas")
 	)
 		m_errorReporter.typeError(
 			1621_error,
-			_location,
-			"Using \"." + _memberName + "(...)\" is deprecated. Use \"{" + _memberName + ": ...}\" instead."
+			location,
+			"Using \"." + memberName + "(...)\" is deprecated. Use \"{" + memberName + ": ...}\" instead."
 		);
 
 	if (
-		_accessedMemberFunctionType->kind() == FunctionType::Kind::ArrayPush &&
-		_hasArguments &&
-		_expressionObjectType->containsNestedMapping()
+		accessedMemberFunctionType->kind() == FunctionType::Kind::ArrayPush &&
+		_memberAccess.annotation().arguments && (*_memberAccess.annotation().arguments).numArguments() > 0 &&
+		expressionObjectType->containsNestedMapping()
 	)
 		m_errorReporter.typeError(
 			8871_error,
-			_location,
+			location,
 			"Storage arrays with nested mappings do not support .push(<arg>)."
 		);
 
 	if (
-		_accessedMemberFunctionType->kind() == FunctionType::Kind::Send ||
-		_accessedMemberFunctionType->kind() == FunctionType::Kind::Transfer
+		accessedMemberFunctionType->kind() == FunctionType::Kind::Send ||
+		accessedMemberFunctionType->kind() == FunctionType::Kind::Transfer
 	)
 		m_errorReporter.warning(
 			9207_error,
-			_location,
+			location,
 			fmt::format(
 				"'{}' is deprecated and scheduled for removal. Use 'call{{value: <amount>}}(\"\")' instead.",
-				_accessedMemberFunctionType->kind() == FunctionType::Kind::Send ? "send" : "transfer"
+				accessedMemberFunctionType->kind() == FunctionType::Kind::Send ? "send" : "transfer"
 			)
 		);
 }
@@ -3287,7 +3289,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	accessedMemberAnnotation.referencedDeclaration = possibleMembers.front().declaration;
 	accessedMemberAnnotation.type = possibleMembers.front().type;
 
-	// Lookup type required to find the function declaration. Set default to `static`.
+	// Lookup type required to find the function declaration.
 	VirtualLookup requiredLookup = VirtualLookup::Static;
 
 	if (auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
@@ -3301,15 +3303,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 					requiredLookup = VirtualLookup::Super;
 			}
 
-		// Validate an accessed member function type.
-		validateAccessMemberFunctionType(
-			accessedMemberFunctionType,
-			expressionObjectType,
-			memberName,
-			_memberAccess.location(),
-			arguments && (*arguments).numArguments() > 0,
-			accessedMemberAnnotation.referencedDeclaration != nullptr
-		);
+		checkAccessedMemberFunction(_memberAccess);
 	}
 
 	accessedMemberAnnotation.requiredLookup = requiredLookup;
