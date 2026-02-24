@@ -207,16 +207,13 @@ private:
 		FuncCallArguments const& _arguments
 	) const;
 
+	std::optional<MemberList::Member> resolveOverloads(MemberAccess const& _memberAccess) const;
 	/// Handles errors related to accessing unresolved members.
 	/// Collects and processes errors for member access operations where the member could not be resolved.
 	/// @param _memberAccess The member access expression where the unresolved member access occurred.
-	/// @param _expressionObjectType The type of the object being accessed.
-	/// @param _memberName The name of the member that could not be resolved.
 	/// @param _possibleMemberCountBeforeOverloading The initial count of possible members before overloading resolution.
-	void handleUnresolvedMemberAccessErrors(
+	void filterOutOverloadsNotMatchingArguments(
 		MemberAccess const& _memberAccess,
-		Type const* _expressionObjectType,
-		ASTString const& _memberName,
 		size_t _possibleMemberCountBeforeOverloading
 	) const;
 

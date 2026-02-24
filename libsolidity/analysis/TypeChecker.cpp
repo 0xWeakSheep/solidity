@@ -3109,93 +3109,133 @@ void TypeChecker::performOverloadedResolution(
 	}
 }
 
-void TypeChecker::handleUnresolvedMemberAccessErrors(
-	MemberAccess const& _memberAccess,
-	Type const* _expressionObjectType,
-	ASTString const& _memberName,
-	size_t const _possibleMemberCountBeforeOverloading) const
+std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess const& _memberAccess) const
 {
-	if (_possibleMemberCountBeforeOverloading == 0 && !dynamic_cast<ArraySliceType const*>(_expressionObjectType))
+	auto& accessedMemberAnnotation = _memberAccess.annotation();
+	auto const& expressionObjectType = type(_memberAccess.expression());
+	auto const& memberName = _memberAccess.memberName();
+
+	// Retrieve the types of the arguments if this is used to call a function.
+	auto const& arguments = accessedMemberAnnotation.arguments;
+	MemberList::MemberMap possibleMembers = expressionObjectType->members(currentDefinitionScope()).membersByName(memberName);
+	size_t const possibleMemberCountBeforeOverloading = possibleMembers.size();
+	if (possibleMemberCountBeforeOverloading > 1 && arguments)
+		performOverloadedResolution(expressionObjectType, possibleMembers, *arguments);
+
+	if (possibleMembers.empty())
+		filterOutOverloadsNotMatchingArguments(_memberAccess, possibleMemberCountBeforeOverloading);
+	else if (possibleMembers.size() > 1)
+		m_errorReporter.fatalTypeError(
+			6675_error,
+			_memberAccess.location(),
+			"Member \"" + memberName + "\" not unique "
+			"after argument-dependent lookup in " + expressionObjectType->humanReadableName() +
+			(memberName == "value" ? " - did you forget the \"payable\" modifier?" : ".")
+		);
+	else
+		return possibleMembers.front();
+
+	return std::nullopt;
+}
+
+void TypeChecker::filterOutOverloadsNotMatchingArguments(
+	MemberAccess const& _memberAccess,
+	size_t const _possibleMemberCountBeforeOverloading
+) const
+{
+	auto const& expressionObjectType = type(_memberAccess.expression());
+	auto const& memberName = _memberAccess.memberName();
+
+	auto reportError = [&](ErrorId _errorId, std::string _description)
+	{
+		m_errorReporter.fatalTypeError(
+			_errorId,
+			_memberAccess.location(),
+			_description
+		);
+	};
+
+	if (_possibleMemberCountBeforeOverloading == 0 && !dynamic_cast<ArraySliceType const*>(expressionObjectType))
 	{
 		// Try to see if the member was removed because it is only available for storage types.
 		auto storageType = TypeProvider::withLocationIfReference(
 			DataLocation::Storage,
-			_expressionObjectType
+			expressionObjectType
 		);
-		if (!storageType->members(currentDefinitionScope()).membersByName(_memberName).empty())
-			m_errorReporter.fatalTypeError(
-				4994_error,
-				_memberAccess.location(),
-				"Member \"" + _memberName + "\" is not available in " +
-				_expressionObjectType->humanReadableName() +
-				" outside of storage."
-			);
+		if (!storageType->members(currentDefinitionScope()).membersByName(memberName).empty())
+			reportError(4994_error,"Member \"" + memberName + "\" is not available in " +
+				expressionObjectType->humanReadableName() +
+				" outside of storage.");
 	}
 
-	auto [errorId, description] = [&]() -> std::tuple<ErrorId, std::string> {
-		std::string errorMsg = "Member \"" + _memberName + "\" not found or not visible "
-			"after argument-dependent lookup in " + _expressionObjectType->humanReadableName() + ".";
+	std::string errorMsg = "Member \"" + memberName + "\" not found or not visible "
+		"after argument-dependent lookup in " + expressionObjectType->humanReadableName() + ".";
 
-		if (auto const* funType = dynamic_cast<FunctionType const*>(_expressionObjectType))
-		{
-			TypePointers const& t = funType->returnParameterTypes();
+	auto const errorCount = m_errorReporter.errorCount();
+	if (auto const* funType = dynamic_cast<FunctionType const*>(expressionObjectType))
+	{
+		TypePointers const& t = funType->returnParameterTypes();
 
-			if (_memberName == "value")
-			{
-				if (funType->kind() == FunctionType::Kind::Creation)
-					return {
-						8827_error,
-						"Constructor for " + t.front()->humanReadableName() + " must be payable for member \"value\" to be available."
-					};
-				else if (
-					funType->kind() == FunctionType::Kind::DelegateCall ||
-					funType->kind() == FunctionType::Kind::BareDelegateCall
-				)
-					return { 8477_error, "Member \"value\" is not allowed in delegated calls due to \"msg.value\" persisting." };
-				else
-					return { 8820_error, "Member \"value\" is only available for payable functions." };
-			}
-			else if (
-				t.size() == 1 && (
-					t.front()->category() == Type::Category::Struct ||
-					t.front()->category() == Type::Category::Contract
-				)
-			)
-				return { 6005_error, errorMsg + " Did you intend to call the function?" };
-		}
-		else if (_expressionObjectType->category() == Type::Category::Contract)
+		if (memberName == "value")
 		{
-			for (MemberList::Member const& addressMember: TypeProvider::payableAddress()->nativeMembers(nullptr))
-				if (addressMember.name == _memberName)
-				{
-					auto const* var = dynamic_cast<Identifier const*>(&_memberAccess.expression());
-					std::string varName = var ? var->name() : "...";
-					errorMsg += " Use \"address(" + varName + ")." + _memberName + "\" to access this address member.";
-					return { 3125_error, errorMsg };
-				}
-		}
-		else if (auto const* addressType = dynamic_cast<AddressType const*>(_expressionObjectType))
-		{
-			// Trigger error when using send or transfer with a non-payable fallback function.
-			if (_memberName == "send" || _memberName == "transfer")
-			{
-				solAssert(
-					addressType->stateMutability() != StateMutability::Payable,
-					"Expected address not-payable as members were not found"
+			if (funType->kind() == FunctionType::Kind::Creation)
+				reportError(
+					8827_error,
+					"Constructor for " + t.front()->humanReadableName() +
+						" must be payable for member \"value\" to be available."
 				);
-
-				return { 9862_error, "\"send\" and \"transfer\" are only available for objects of type \"address payable\", not \"" + _expressionObjectType->humanReadableName() + "\"." };
-			}
+			else if (
+				funType->kind() == FunctionType::Kind::DelegateCall ||
+				funType->kind() == FunctionType::Kind::BareDelegateCall
+			)
+				reportError(
+					8477_error,
+					"Member \"value\" is not allowed in delegated calls due to \"msg.value\" persisting."
+				);
+			else
+				reportError(8820_error, "Member \"value\" is only available for payable functions.");
 		}
+		else if (
+			t.size() == 1 && (
+				t.front()->category() == Type::Category::Struct ||
+				t.front()->category() == Type::Category::Contract
+			)
+		)
+			reportError(6005_error, errorMsg + " Did you intend to call the function?");
+	}
+	else if (expressionObjectType->category() == Type::Category::Contract)
+	{
+		for (MemberList::Member const& addressMember: TypeProvider::payableAddress()->nativeMembers(nullptr))
+			if (addressMember.name == memberName)
+			{
+				auto const* var = dynamic_cast<Identifier const*>(&_memberAccess.expression());
+				std::string varName = var ? var->name() : "...";
+				errorMsg += " Use \"address(" + varName + ")." + memberName + "\" to access this address member.";
+				reportError(3125_error, errorMsg);
+			}
+	}
+	else if (auto const* addressType = dynamic_cast<AddressType const*>(expressionObjectType))
+	{
+		// Trigger error when using `send` or `transfer` with a non-payable fallback function.
+		if (memberName == "send" || memberName == "transfer")
+		{
+			solAssert(
+				addressType->stateMutability() != StateMutability::Payable,
+				"Expected address not-payable as members were not found"
+			);
 
-		return { 9582_error, errorMsg };
-	}();
+			reportError(
+				9862_error,
+				"\"send\" and \"transfer\" are only available for objects of type \"address payable\", not \""
+					+ expressionObjectType->humanReadableName() + "\"."
+			);
+		}
+	}
 
-	m_errorReporter.fatalTypeError(
-		errorId,
-		_memberAccess.location(),
-		description
-	);
+	// If no detailed error were reported, issues a general unresolved member error.
+	// TODO: Consider merging `storage` member case from the top of this function with the rest of the checks.
+	if (errorCount == m_errorReporter.errorCount())
+		reportError(9582_error, errorMsg);
 }
 
 void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess) const
@@ -3260,34 +3300,13 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	ASTString const& memberName = _memberAccess.memberName();
 
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
-
-	// Retrieve the types of the arguments if this is used to call a function.
-	auto const& arguments = accessedMemberAnnotation.arguments;
-	MemberList::MemberMap possibleMembers = expressionObjectType->members(currentDefinitionScope()).membersByName(memberName);
-	size_t const possibleMemberCountBeforeOverloading = possibleMembers.size();
-	if (possibleMemberCountBeforeOverloading > 1 && arguments)
-		performOverloadedResolution(expressionObjectType, possibleMembers, *arguments);
-
 	accessedMemberAnnotation.isConstant = false;
+	auto const maybePossibleMember = resolveOverloads(_memberAccess);
+	if (!maybePossibleMember)
+		return false;
 
-	if (possibleMembers.empty())
-		handleUnresolvedMemberAccessErrors(
-			_memberAccess,
-			expressionObjectType,
-			memberName,
-			possibleMemberCountBeforeOverloading
-		);
-	else if (possibleMembers.size() > 1)
-		m_errorReporter.fatalTypeError(
-			6675_error,
-			_memberAccess.location(),
-			"Member \"" + memberName + "\" not unique "
-			"after argument-dependent lookup in " + expressionObjectType->humanReadableName() +
-			(memberName == "value" ? " - did you forget the \"payable\" modifier?" : ".")
-		);
-
-	accessedMemberAnnotation.referencedDeclaration = possibleMembers.front().declaration;
-	accessedMemberAnnotation.type = possibleMembers.front().type;
+	accessedMemberAnnotation.referencedDeclaration = (*maybePossibleMember).declaration;
+	accessedMemberAnnotation.type = (*maybePossibleMember).type;
 
 	// Lookup type required to find the function declaration.
 	VirtualLookup requiredLookup = VirtualLookup::Static;
