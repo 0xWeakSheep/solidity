@@ -1,0 +1,16 @@
+{
+	"language": "Solidity",
+	"sources": {
+		"C": {"urls": ["in.sol"]}
+	},
+	"settings": {
+        "viaIR": true,
+        "debug": {
+            "revertStrings": "strip",
+            "debugInfo": []
+        },
+		"outputSelection": {
+			"*": {"*": ["evm.assembly"]}
+		}
+	}
+}

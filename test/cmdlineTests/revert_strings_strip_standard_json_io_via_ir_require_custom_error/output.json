@@ -1,0 +1,504 @@
+{
+    "contracts": {
+        "C": {
+            "C": {
+                "evm": {
+                    "assembly": "  mstore(0x40, 0x80)
+  jumpi(tag_3, callvalue)
+  tag_5
+  tag_1
+  jump\t// in
+tag_5:
+  dataSize(sub_0)
+  dataOffset(sub_0)
+  dup3
+  codecopy
+  dataSize(sub_0)
+  swap1
+  return
+tag_3:
+  tag_2
+  jump\t// in
+tag_1:
+  mload(0x40)
+  swap1
+  jump\t// out
+tag_2:
+  0x00
+  dup1
+  revert
+stop
+
+sub_0: assembly {
+      mstore(0x40, 0x80)
+      jumpi(tag_36, iszero(lt(calldatasize, 0x04)))
+    tag_37:
+      tag_12
+      jump\t// in
+    tag_36:
+      tag_38
+      calldataload(0x00)
+      tag_1
+      jump\t// in
+    tag_38:
+      dup1
+      0x26121ff0
+      eq
+      tag_39
+      jumpi
+      0x890eba68
+      sub
+      tag_37
+      jumpi
+      tag_11
+      jump\t// in
+    tag_39:
+      tag_7
+      jump\t// in
+    tag_1:
+      0xe0
+      shr
+      swap1
+      jump\t// out
+    tag_2:
+      mload(0x40)
+      swap1
+      jump\t// out
+    tag_3:
+      0x00
+      dup1
+      revert
+    tag_4:
+      0x00
+      dup1
+      revert
+    tag_5:
+      0x00
+      swap2
+      sub
+      slt
+      tag_43
+      jumpi
+      jump\t// out
+    tag_43:
+      tag_4
+      jump\t// in
+    tag_6:
+      0x00
+      add
+      swap1
+      jump\t// out
+    tag_7:
+      jumpi(tag_45, callvalue)
+      tag_47
+      calldatasize
+      0x04
+      tag_5
+      jump\t// in
+    tag_47:
+      tag_48
+      tag_33
+      jump\t// in
+    tag_48:
+      tag_49
+      tag_2
+      jump\t// in
+    tag_49:
+      dup1
+      tag_50
+      dup2
+      tag_6
+      jump\t// in
+    tag_50:
+      sub
+      swap1
+      return
+    tag_45:
+      tag_3
+      jump\t// in
+    tag_8:
+      iszero
+      iszero
+      swap1
+      jump\t// out
+    tag_9:
+      tag_51
+      swap1
+      tag_8
+      jump\t// in
+    tag_51:
+      swap1
+      mstore
+      jump\t// out
+    tag_10:
+      swap2
+      swap1
+      tag_52
+      swap1
+      0x00
+      0x20
+      dup6
+      add
+      swap5
+      add
+      swap1
+      tag_9
+      jump\t// in
+    tag_52:
+      jump\t// out
+    tag_11:
+      jumpi(tag_53, callvalue)
+      tag_55
+      calldatasize
+      0x04
+      tag_5
+      jump\t// in
+    tag_55:
+      tag_56
+      tag_57
+      tag_35
+      jump\t// in
+    tag_57:
+      tag_58
+      tag_2
+      jump\t// in
+    tag_58:
+      swap2
+      dup3
+      swap2
+      dup3
+      tag_10
+      jump\t// in
+    tag_56:
+      sub
+      swap1
+      return
+    tag_53:
+      tag_3
+      jump\t// in
+    tag_12:
+      0x00
+      dup1
+      revert
+    tag_13:
+      swap1
+      jump\t// out
+    tag_14:
+      swap1
+      jump\t// out
+    tag_15:
+      swap1
+      jump\t// out
+    tag_16:
+      tag_59
+      tag_60
+      tag_61
+      swap3
+      tag_13
+      jump\t// in
+    tag_60:
+      tag_15
+      jump\t// in
+    tag_59:
+      tag_14
+      jump\t// in
+    tag_61:
+      swap1
+      jump\t// out
+    tag_17:
+      0x1f
+      dup1
+      not
+      swap2
+      add
+      and
+      swap1
+      jump\t// out
+    tag_18:
+      mstore(0x00, shl(0xe0, 0x4e487b71))
+      mstore(0x04, 0x41)
+      revert(0x00, 0x24)
+    tag_19:
+      swap1
+      tag_62
+      swap1
+      tag_17
+      jump\t// in
+    tag_62:
+      dup2
+      add
+      swap1
+      dup2
+      lt
+      0xffffffffffffffff
+      dup3
+      gt
+      or
+      tag_63
+      jumpi
+      0x40
+      mstore
+      jump\t// out
+    tag_63:
+      tag_18
+      jump\t// in
+    tag_20:
+      swap1
+      tag_65
+      tag_66
+      tag_2
+      jump\t// in
+    tag_66:
+      swap3
+      dup4
+      tag_19
+      jump\t// in
+    tag_65:
+      jump\t// out
+    tag_21:
+      0xffffffffffffffff
+      dup2
+      gt
+      tag_67
+      jumpi
+      tag_69
+      0x20
+      swap2
+      tag_17
+      jump\t// in
+    tag_69:
+      add
+      swap1
+      jump\t// out
+    tag_67:
+      tag_18
+      jump\t// in
+    tag_22:
+      swap1
+      tag_70
+      tag_71
+      dup4
+      tag_21
+      jump\t// in
+    tag_71:
+      tag_20
+      jump\t// in
+    tag_70:
+      swap2
+      dup3
+      mstore
+      jump\t// out
+    tag_23:
+      0x00
+      0x6572726f72000000000000000000000000000000000000000000000000000000
+      swap2
+      add
+      mstore
+      jump\t// out
+    tag_24:
+      tag_72
+      0x05
+      tag_22
+      jump\t// in
+    tag_72:
+      swap1
+      tag_73
+      0x20
+      dup4
+      add
+      tag_23
+      jump\t// in
+    tag_73:
+      jump\t// out
+    tag_25:
+      tag_74
+      tag_24
+      jump\t// in
+    tag_74:
+      swap1
+      jump\t// out
+    tag_26:
+      tag_75
+      swap1
+      tag_14
+      jump\t// in
+    tag_75:
+      swap1
+      mstore
+      jump\t// out
+    tag_27:
+      mload
+      swap1
+      jump\t// out
+    tag_28:
+      0x20
+      swap2
+      dup2
+      mstore
+      add
+      swap1
+      jump\t// out
+    tag_29:
+      swap1
+      dup3
+      0x00
+      swap4
+      swap3
+      dup3
+      mcopy
+      add
+      mstore
+      jump\t// out
+    tag_30:
+      tag_76
+      tag_77
+      0x20
+      swap4
+      tag_78
+      swap4
+      tag_79
+      dup2
+      tag_27
+      jump\t// in
+    tag_79:
+      swap4
+      dup5
+      dup1
+      swap4
+      tag_28
+      jump\t// in
+    tag_76:
+      swap6
+      dup7
+      swap2
+      add
+      tag_29
+      jump\t// in
+    tag_77:
+      tag_17
+      jump\t// in
+    tag_78:
+      add
+      swap1
+      jump\t// out
+    tag_31:
+      swap4
+      swap3
+      swap1
+      tag_80
+      0x40
+      swap2
+      tag_81
+      swap5
+      tag_82
+      0x60
+      dup10
+      add
+      swap3
+      0x00
+      dup11
+      add
+      swap1
+      tag_26
+      jump\t// in
+    tag_82:
+      dup8
+      dup3
+      sub
+      0x20
+      dup10
+      add
+      mstore
+      tag_30
+      jump\t// in
+    tag_80:
+      swap5
+      add
+      swap1
+      tag_9
+      jump\t// in
+    tag_81:
+      jump\t// out
+    tag_32:
+      swap3
+      swap1
+      swap2
+      swap3
+      iszero
+      tag_83
+      jumpi
+      pop
+      pop
+      pop
+      jump\t// out
+    tag_83:
+      tag_85
+      swap1
+      tag_86
+      tag_2
+      jump\t// in
+    tag_86:
+      swap4
+      dup5
+      swap4
+      shl(0xe5, 0x01676c8b)
+      dup6
+      mstore
+      0x04
+      dup6
+      add
+      tag_31
+      jump\t// in
+    tag_85:
+      sub
+      swap1
+      revert
+    tag_33:
+      tag_87
+      tag_88
+      0x08
+      tag_16
+      jump\t// in
+    tag_88:
+      tag_89
+      tag_25
+      jump\t// in
+    tag_89:
+      0x00
+      swap2
+      tag_90
+      tag_35
+      jump\t// in
+    tag_90:
+      swap3
+      tag_32
+      jump\t// in
+    tag_87:
+      jump\t// out
+    tag_34:
+      0x00
+      swap1
+      jump\t// out
+    tag_35:
+      tag_91
+      tag_34
+      jump\t// in
+    tag_91:
+      pop
+      0x00
+      swap1
+      jump\t// out
+
+    auxdata: <AUXDATA REMOVED>
+}
+"
+                }
+            }
+        }
+    },
+    "sources": {
+        "C": {
+            "id": 0
+        }
+    }
+}
