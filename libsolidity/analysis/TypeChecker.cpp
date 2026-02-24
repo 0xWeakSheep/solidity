@@ -3090,25 +3090,6 @@ void TypeChecker::endVisit(NewExpression const& _newExpression)
 	}
 }
 
-void TypeChecker::performOverloadedResolution(
-	Type const*  _expressionObjectType,
-	MemberList::MemberMap& _possibleMembers,
-	FuncCallArguments const& _arguments
-) const
-{
-	// do overload resolution
-	for (auto it = _possibleMembers.begin(); it != _possibleMembers.end();)
-	{
-		if (
-			it->type->category() == Type::Category::Function &&
-			!dynamic_cast<FunctionType const&>(*it->type).canTakeArguments(_arguments, _expressionObjectType)
-		)
-			it = _possibleMembers.erase(it);
-		else
-			++it;
-	}
-}
-
 std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess const& _memberAccess) const
 {
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
@@ -3120,7 +3101,19 @@ std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess con
 	MemberList::MemberMap possibleMembers = expressionObjectType->members(currentDefinitionScope()).membersByName(memberName);
 	size_t const possibleMemberCountBeforeOverloading = possibleMembers.size();
 	if (possibleMemberCountBeforeOverloading > 1 && arguments)
-		performOverloadedResolution(expressionObjectType, possibleMembers, *arguments);
+	{
+		// do overload resolution
+		for (auto it = possibleMembers.begin(); it != possibleMembers.end();)
+		{
+			if (
+				it->type->category() == Type::Category::Function &&
+				!dynamic_cast<FunctionType const&>(*it->type).canTakeArguments(*arguments, expressionObjectType)
+			)
+				it = possibleMembers.erase(it);
+			else
+				++it;
+		}
+	}
 
 	if (possibleMembers.empty())
 		filterOutOverloadsNotMatchingArguments(_memberAccess, possibleMemberCountBeforeOverloading);
@@ -3300,6 +3293,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	ASTString const& memberName = _memberAccess.memberName();
 
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
+	// TODO: Explain. `isConstant` is never `true`?
 	accessedMemberAnnotation.isConstant = false;
 	auto const maybePossibleMember = resolveOverloads(_memberAccess);
 	if (!maybePossibleMember)

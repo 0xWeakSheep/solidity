@@ -196,18 +196,9 @@ private:
 	/// Resolves overloaded functions by filtering out inapplicable candidates based on the provided arguments
 	/// and the object type of the expression. This process ensures that only valid functions from the given set
 	/// of possible members remain, based on argument compatibility and type constraints.
-	/// @param _expressionObjectType The type of the object on which the member function is invoked.
-	/// @param _possibleMembers A map of possible member functions of the object. This map will be modified in-place,
-	///                          removing members that do not match the provided arguments or object type.
-	/// @param _arguments The list of arguments provided in the function call, used to validate compatibility with
-	/// candidate members.
-	void performOverloadedResolution(
-		Type const* _expressionObjectType,
-		MemberList::MemberMap& _possibleMembers,
-		FuncCallArguments const& _arguments
-	) const;
-
+	/// Reports an error in case of ambiguity or failure to resolve.
 	std::optional<MemberList::Member> resolveOverloads(MemberAccess const& _memberAccess) const;
+
 	/// Handles errors related to accessing unresolved members.
 	/// Collects and processes errors for member access operations where the member could not be resolved.
 	/// @param _memberAccess The member access expression where the unresolved member access occurred.
