@@ -33,17 +33,14 @@ void SSAValueTracker::operator()(Assignment const& _assignment)
 {
 	for (auto const& var: _assignment.variableNames)
 		m_values.erase(var.name);
-
-	for (auto const& var: _assignment.variableNames)
-		m_functionParameters.erase(var.name);
 }
 
 void SSAValueTracker::operator()(FunctionDefinition const& _funDef)
 {
-	solAssert(!m_functionParameters.contains(_funDef.name), "SSAValueTracker requires Disambiguator to run first");
+	solAssert(!m_values.contains(_funDef.name), "SSAValueTracker requires Disambiguator to run first");
 
 	for (auto const& param: _funDef.parameters)
-		m_functionParameters.insert(param.name);
+		m_values[param.name] = nullptr;
 
 	for (auto const& var: _funDef.returnVariables)
 		setValue(var.name, nullptr);
@@ -74,9 +71,6 @@ bool SSAValueTracker::isSSAWithDependencies(Expression const* _expression) const
 	}
 	else if (auto const* identifier = std::get_if<Identifier>(_expression))
 	{
-		if (m_functionParameters.contains(identifier->name))
-			return true;
-
 		auto const it = m_values.find(identifier->name);
 		if (it == m_values.end())
 			return false;

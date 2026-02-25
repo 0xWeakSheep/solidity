@@ -63,7 +63,6 @@ private:
 	/// YulName does not need to be reset because SSAValueTracker is short-lived.
 	Expression const m_zero{Literal{{}, LiteralKind::Number, LiteralValue(u256{0})}};
 	std::map<YulName, Expression const*> m_values;
-	std::set<YulName> m_functionParameters;
 };
 
 }
