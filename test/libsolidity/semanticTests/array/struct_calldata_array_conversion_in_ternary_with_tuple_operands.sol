@@ -3,7 +3,7 @@ pragma abicoder v2;
 contract C {
     struct N {
         address addr;
-        bytes data;
+        bytes32 data32;
     }
 
     struct S {
@@ -20,27 +20,27 @@ contract C {
         ss[0].addr = address(1);
         ss[0].ns = new N[](1);
         ss[0].ns[0].addr = address(1);
-        ss[0].ns[0].data = "abdeff00";
+        ss[0].ns[0].data32 = "abdeff00";
         ss[0].data = "abdeff";
 
         ss[1].a = 124;
         ss[1].addr = address(2);
         ss[1].ns = new N[](2);
         ss[1].ns[0].addr = address(2);
-        ss[1].ns[0].data = "abdeff10";
+        ss[1].ns[0].data32 = "abdeff10";
         ss[1].ns[1].addr = address(2);
-        ss[1].ns[1].data = "abdeff11";
+        ss[1].ns[1].data32 = "abdeff11";
         ss[1].data = "deabff";
 
         ss[2].a = 125;
         ss[2].addr = address(3);
         ss[2].ns = new N[](3);
         ss[2].ns[0].addr = address(3);
-        ss[2].ns[0].data = "abdeff20";
+        ss[2].ns[0].data32 = "abdeff20";
         ss[2].ns[1].addr = address(3);
-        ss[2].ns[1].data = "abdeff21";
+        ss[2].ns[1].data32 = "abdeff21";
         ss[2].ns[2].addr = address(3);
-        ss[2].ns[2].data = "abdeff22";
+        ss[2].ns[2].data32 = "abdeff22";
         ss[2].data = "deffab";
 
         return ss;
@@ -72,12 +72,13 @@ contract C {
         {
             require(s0[i].a == s1[i].a);
             require(s0[i].addr == s1[i].addr);
+
             require(s0[i].ns.length == s1[i].ns.length);
 
             for (uint j = 0; j < s0[i].ns.length; j = j + 1)
             {
                 require(s0[i].ns[j].addr == s1[i].ns[j].addr);
-                require(compare_bytes(s0[i].ns[j].data, s1[i].ns[j].data));
+                require(s0[i].ns[j].data32 == s1[i].ns[j].data32);
             }
 
             require(compare_bytes(s0[i].data, s1[i].data));
@@ -86,4 +87,4 @@ contract C {
 }
 // ----
 // test() ->
-// gas legacy: 108742
+// gas legacy: 78999
