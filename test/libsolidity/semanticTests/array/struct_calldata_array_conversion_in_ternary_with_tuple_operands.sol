@@ -13,7 +13,7 @@ contract C {
         bytes data;
     }
 
-    function g() public returns(S[] memory) {
+    function g() private returns(S[] memory) {
         S[] memory ss = new S[](3);
 
         ss[0].a = 123;
@@ -50,13 +50,40 @@ contract C {
         (S[] calldata b, ) = true ? (a, 0) : (a, 0);
         return b;
     }
+
+    function compare_bytes(bytes memory a, bytes memory b) private pure returns(bool)
+    {
+        require(a.length == b.length);
+        for (uint i = 0; i < a.length; i = i + 1)
+            if (a[i] != b[i])
+                return false;
+
+        return true;
+    }
+
+    function test() public
+    {
+        S[] memory s0 = g();
+        S[] memory s1 = this.g(s0);
+
+        require(s0.length == s1.length);
+
+        for (uint i = 0; i < s0.length; i = i + 1)
+        {
+            require(s0[i].a == s1[i].a);
+            require(s0[i].addr == s1[i].addr);
+            require(s0[i].ns.length == s1[i].ns.length);
+
+            for (uint j = 0; j < s0[i].ns.length; j = j + 1)
+            {
+                require(s0[i].ns[j].addr == s1[i].ns[j].addr);
+                require(compare_bytes(s0[i].ns[j].data, s1[i].ns[j].data));
+            }
+
+            require(compare_bytes(s0[i].data, s1[i].data));
+        }
+    }
 }
-// Result of g(), result and input of the last call must all be equal.
 // ----
-// g()
-// ->
-// 0x20, 0x03, 0x60, 0x01e0, 0x0400, 123, 1, 0x80, 0x0140, 0x01, 0x20, 1, 0x40, 8, "abdeff00", 6, "abdeff", 124, 2, 0x80, 0x01e0, 2, 0x40, 0xc0, 2, 0x40, 0x08, "abdeff10", 0x02, 0x40, 0x08, "abdeff11", 6, "deabff", 125, 3, 0x80, 0x0280, 3, 0x60, 0xe0, 0x0160, 3, 0x40, 0x08, "abdeff20", 0x03, 0x40, 0x08, "abdeff21", 0x03, 0x40, 0x08, "abdeff22", 6, "deffab"
-// g((uint8,address,(address,bytes)[],bytes)[]):
-// 0x20, 0x03, 0x60, 0x01e0, 0x0400, 123, 1, 0x80, 0x0140, 0x01, 0x20, 1, 0x40, 8, "abdeff00", 6, "abdeff", 124, 2, 0x80, 0x01e0, 2, 0x40, 0xc0, 2, 0x40, 0x08, "abdeff10", 0x02, 0x40, 0x08, "abdeff11", 6, "deabff", 125, 3, 0x80, 0x0280, 3, 0x60, 0xe0, 0x0160, 3, 0x40, 0x08, "abdeff20", 0x03, 0x40, 0x08, "abdeff21", 0x03, 0x40, 0x08, "abdeff22", 6, "deffab"
-// ->
-// 0x20, 0x03, 0x60, 0x01e0, 0x0400, 123, 1, 0x80, 0x0140, 0x01, 0x20, 1, 0x40, 8, "abdeff00", 6, "abdeff", 124, 2, 0x80, 0x01e0, 2, 0x40, 0xc0, 2, 0x40, 0x08, "abdeff10", 0x02, 0x40, 0x08, "abdeff11", 6, "deabff", 125, 3, 0x80, 0x0280, 3, 0x60, 0xe0, 0x0160, 3, 0x40, 0x08, "abdeff20", 0x03, 0x40, 0x08, "abdeff21", 0x03, 0x40, 0x08, "abdeff22", 6, "deffab"
+// test() ->
+// gas legacy: 108742
