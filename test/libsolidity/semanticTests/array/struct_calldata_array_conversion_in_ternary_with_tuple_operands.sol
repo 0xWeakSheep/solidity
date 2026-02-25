@@ -85,6 +85,8 @@ contract C {
         }
     }
 }
+// ====
+// EVMVersion: >homestead
 // ----
 // test() ->
 // gas legacy: 78999
