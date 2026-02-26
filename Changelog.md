@@ -13,6 +13,7 @@ Compiler Features:
 
 Bugfixes:
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
+* Yul IR Code Generation: Preserve custom error argument of `require` when option `revert-strings=strip` is selected.
 
 
 ### 0.8.34 (2026-02-18)
