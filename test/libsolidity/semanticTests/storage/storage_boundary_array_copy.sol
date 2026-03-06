@@ -45,7 +45,7 @@ contract C {
 // x() -> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 // y() -> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 // copyXToY()
-// gas irOptimized: 264224
+// gas irOptimized: 264272
 // gas legacy: 265914
 // gas legacyOptimized: 264423
 // x() -> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
@@ -54,7 +54,7 @@ contract C {
 // x() -> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 // y() -> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 // copyYToX()
-// gas irOptimized: 266243
+// gas irOptimized: 266291
 // gas legacy: 267936
 // gas legacyOptimized: 266456
 // x() -> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10

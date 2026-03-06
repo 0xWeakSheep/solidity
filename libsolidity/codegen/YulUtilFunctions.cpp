@@ -2428,7 +2428,7 @@ std::string YulUtilFunctions::storageArrayIndexAccessFunction(ArrayType const& _
 					</isBytesArray>
 				<!multipleItemsPerSlot>
 					let dataArea := <dataAreaFunc>(array)
-					slot := add(dataArea, mul(index, <storageSize>))
+					slot := add(dataArea, <mul>(index, <storageSize>))
 					offset := 0
 				</multipleItemsPerSlot>
 			}
@@ -2441,6 +2441,9 @@ std::string YulUtilFunctions::storageArrayIndexAccessFunction(ArrayType const& _
 		("multipleItemsPerSlot", _type.baseType()->storageBytes() <= 16)
 		("isBytesArray", _type.isByteArrayOrString())
 		("storageSize", _type.baseType()->storageSize().str())
+		("mul", _type.baseType()->storageSize() > 1
+			? overflowCheckedIntMulFunction(*TypeProvider::uint256())
+			: "mul")
 		("storageBytes", toString(_type.baseType()->storageBytes()))
 		("itemsPerSlot", std::to_string(32 / _type.baseType()->storageBytes()))
 		.render();
