@@ -10,6 +10,7 @@ Compiler Features:
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
 
 Important Bugfixes:
+* Code Generator: Fix unchecked multiplication overflow when computing storage slot offsets during element access on arrays whose base type is large enough for the product of the index and the storage size to overflow, which could silently read from or write to incorrect storage slots.
 * Evmasm Code Generator: Fix unchecked multiplication overflow when computing the storage size of dynamic arrays during deletion, which could result in `delete` silently leaving stale data in storage.
 
 Bugfixes:
