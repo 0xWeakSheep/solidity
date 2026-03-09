@@ -28,10 +28,7 @@ def test_no_convert_fun_generated():
         """))
 
     output = subprocess.check_output(
-        [solc_binary]
-        + [source_file_path]
-        + (["--ir"])
-        + (["--optimize"]),
+        [solc_binary, source_file_path, (["--ir"]) (["--optimize"])],
         encoding="utf8",
     )
 
