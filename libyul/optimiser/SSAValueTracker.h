@@ -25,7 +25,7 @@
 #include <libyul/optimiser/ASTWalker.h>
 #include <libyul/AST.h> // Needed for m_zero below.
 
-#include <map>
+#include <unordered_map>
 #include <set>
 
 namespace solidity::yul
@@ -47,7 +47,7 @@ public:
 	void operator()(VariableDeclaration const& _varDecl) override;
 	void operator()(Assignment const& _assignment) override;
 
-	std::map<YulName, Expression const*> const& values() const { return m_values; }
+	std::unordered_map<YulName, Expression const*> const& values() const { return m_values; }
 	Expression const* value(YulName _name) const { return m_values.at(_name); }
 
 	static std::set<YulName> ssaVariables(Block const& _ast);
@@ -62,7 +62,9 @@ private:
 	/// Special expression whose address will be used in m_values.
 	/// YulName does not need to be reset because SSAValueTracker is short-lived.
 	Expression const m_zero{Literal{{}, LiteralKind::Number, LiteralValue(u256{0})}};
-	std::map<YulName, Expression const*> m_values;
+	std::unordered_map<YulName, Expression const*> m_values;
+	/// Cache for isSSAWithDependencies to avoid redundant traversals
+	mutable std::unordered_map<Expression const*, bool> m_isSSACache;
 };
 
 }

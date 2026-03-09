@@ -61,25 +61,38 @@ bool SSAValueTracker::isSSAWithDependencies(Expression const* _expression) const
 	if (_expression == nullptr)
 		return true;
 
+	// Check cache first
+	auto cacheIt = m_isSSACache.find(_expression);
+	if (cacheIt != m_isSSACache.end())
+		return cacheIt->second;
+
+	bool result;
 	if (auto const* functionCall = std::get_if<FunctionCall>(_expression))
 	{
+		result = true;
 		for (auto const& argument: functionCall->arguments)
 			if (!isSSAWithDependencies(&argument))
-				return false;
-
-		return true;
+			{
+				result = false;
+				break;
+			}
 	}
 	else if (auto const* identifier = std::get_if<Identifier>(_expression))
 	{
 		auto const it = m_values.find(identifier->name);
 		if (it == m_values.end())
-			return false;
-		return isSSAWithDependencies(it->second);
+			result = false;
+		else
+			result = isSSAWithDependencies(it->second);
 	}
 	else
+	{
 		solAssert(std::holds_alternative<Literal>(*_expression), "Impossible expression type");
+		result = true;
+	}
 
-	return true;
+	m_isSSACache[_expression] = result;
+	return result;
 }
 
 std::set<YulName> SSAValueTracker::ssaVariables(Block const& _ast)
