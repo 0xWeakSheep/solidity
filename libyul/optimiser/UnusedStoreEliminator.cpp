@@ -163,13 +163,13 @@ void UnusedStoreEliminator::visit(Statement const& _statement)
 		*instruction == Instruction::EXTCODECOPY ||
 		*instruction == Instruction::CODECOPY ||
 		*instruction == Instruction::CALLDATACOPY ||
-		*instruction == Instruction::RETURNDATACOPY ||
 		// TODO: Removing MCOPY is complicated because it's not just a store but also a load.
 		//*instruction == Instruction::MCOPY ||
 		*instruction == Instruction::MSTORE ||
 		*instruction == Instruction::MSTORE8;
 	bool isCandidateForRemoval =
 		*instruction != Instruction::MCOPY &&
+		*instruction != Instruction::RETURNDATACOPY &&
 		SemanticInformation::otherState(*instruction) != SemanticInformation::Write && (
 			SemanticInformation::storage(*instruction) == SemanticInformation::Write ||
 			(!m_ignoreMemory && SemanticInformation::memory(*instruction) == SemanticInformation::Write)
@@ -177,29 +177,6 @@ void UnusedStoreEliminator::visit(Statement const& _statement)
 	yulAssert(isCandidateForRemoval == (isStorageWrite || (!m_ignoreMemory && isMemoryWrite)));
 	if (isCandidateForRemoval)
 	{
-		if (*instruction == Instruction::RETURNDATACOPY)
-		{
-			// Out-of-bounds access to the returndata buffer results in a revert,
-			// so we are careful not to remove a potentially reverting call to a builtin.
-			// The only way the Solidity compiler uses `returndatacopy` is
-			// `returndatacopy(X, 0, returndatasize())`, so we only allow to remove this pattern
-			// (which is guaranteed to never cause an out-of-bounds revert).
-			bool allowReturndatacopyToBeRemoved = false;
-			auto startOffset = identifierNameIfSSA(funCall->arguments.at(1));
-			auto length = identifierNameIfSSA(funCall->arguments.at(2));
-			if (length && startOffset)
-			{
-				FunctionCall const* lengthCall = std::get_if<FunctionCall>(m_ssaValues.at(*length).value);
-				if (
-					m_knowledgeBase.knownToBeZero(*startOffset) &&
-					lengthCall &&
-					toEVMInstruction(m_dialect, lengthCall->functionName) == Instruction::RETURNDATASIZE
-				)
-					allowReturndatacopyToBeRemoved = true;
-			}
-			if (!allowReturndatacopyToBeRemoved)
-				return;
-		}
 		m_allStores.insert(&_statement);
 		std::vector<Operation> operations = operationsFromFunctionCall(*funCall);
 		yulAssert(operations.size() == 1, "");
