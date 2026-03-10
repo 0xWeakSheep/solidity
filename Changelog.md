@@ -8,6 +8,7 @@ Compiler Features:
 * Metadata: Store the state of the experimental mode in JSON and CBOR metadata. In CBOR this broadens the meaning of the existing `experimental` field, which used to indicate only the presence of certain experimental pragmas in the source.
 * Standard JSON Interface: Introduce `settings.experimental` setting required for enabling the experimental mode.
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
+* Yul Optimizer: Remove optimization that eliminated `returndatacopy` operations. This optimization was intentionally removed because it is very rarely used and complicates the implementation of `UnusedStoreEliminator`.
 
 Bugfixes:
  * Yul Optimizer: Fix `UnusedStoreEliminator` incorrectly removing `returndatacopy` operations when the length comes from a stale `returndatasize()` call that was invalidated by subsequent call opcodes.
