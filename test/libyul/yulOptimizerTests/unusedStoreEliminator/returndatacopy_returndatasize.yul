@@ -6,9 +6,8 @@
 // ```
 // let x = returndatasize()
 // staticcall(...)
-// returndatacopy(0, 0, x) // Cannot be optimized away, becasue it can revert.
+// returndatacopy(0, 0, x) // Cannot be optimized away, because it can revert.
 // ```
-function foo() ->
 {
   returndatacopy(0,0,returndatasize())
 }
