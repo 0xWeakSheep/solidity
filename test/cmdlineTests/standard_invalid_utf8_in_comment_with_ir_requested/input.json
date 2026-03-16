@@ -1,0 +1,17 @@
+{
+	"language": "Solidity",
+	"sources":
+	{
+		"source.sol":
+		{
+			"urls": ["source.sol"]
+		}
+	},
+	"settings":
+	{
+		"outputSelection":
+		{
+			"*": { "*": ["ir"] }
+		}
+	}
+}

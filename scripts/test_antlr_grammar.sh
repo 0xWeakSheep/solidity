@@ -65,6 +65,7 @@ done < <(
       grep -v -E 'literals/.*_direction_override.*.sol' |
       # Skipping tests with invalid UTF-8 bytes that ANTLR cannot handle.
       grep -v -E 'comments/.*invalid_utf8.*.sol' |
+      grep -v -E 'inlineAssembly/.*invalid_utf8.*.sol' |
       # Skipping a test with "revert E;" because ANTLR cannot distinguish it from
       # a variable declaration.
       grep -v -E 'revertStatement/non_called.sol' |

@@ -1,0 +1,18 @@
+{
+    "errors": [
+        {
+            "component": "general",
+            "errorCode": "1605",
+            "formattedMessage": "ParserError: Invalid UTF-8 sequence in comment.\n --> source.sol:1:1:\n  |\n1 | //\uFFFD\n  | ^^^\n\n",
+            "message": "Invalid UTF-8 sequence in comment.",
+            "severity": "error",
+            "sourceLocation": {
+                "end": 3,
+                "file": "source.sol",
+                "start": 0
+            },
+            "type": "ParserError"
+        }
+    ],
+    "sources": {}
+}
