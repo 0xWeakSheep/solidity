@@ -124,7 +124,7 @@ def extract_and_write(path, language):
             yulCases  = extract_yul_docs_cases(path)
     elif path.endswith('.sol'):
         if language in ("solidity", ""):
-            with open(path, mode='r', encoding='utf8', newline='') as f:
+            with open(path, mode='r', encoding='utf8', errors='ignore', newline='') as f:
                 cases = [f.read()]
     else:
         cases = extract_test_cases(path)
@@ -159,7 +159,5 @@ if __name__ == '__main__':
             if 'compilationTests' in subdirs:
                 subdirs.remove('compilationTests')
             for f in files:
-                if "invalid_utf8" in basename(f):
-                    continue  # ignore tests with invalid utf-8 encoding
                 path = join(root, f)
                 extract_and_write(path, options.language)
