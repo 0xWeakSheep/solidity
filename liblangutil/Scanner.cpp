@@ -54,6 +54,8 @@
 #include <liblangutil/Exceptions.h>
 #include <liblangutil/Scanner.h>
 
+#include <libsolutil/UTF8.h>
+
 #include <boost/algorithm/string/classification.hpp>
 
 #include <optional>
@@ -84,9 +86,7 @@ std::string to_string(ScannerError _errorCode)
 		case ScannerError::OctalNotAllowed: return "Octal numbers not allowed.";
 		case ScannerError::DirectionalOverrideUnderflow: return "Unicode direction override underflow in comment or string literal.";
 		case ScannerError::DirectionalOverrideMismatch: return "Mismatching directional override markers in comment or string literal.";
-		default:
-			solAssert(false, "Unhandled case in to_string(ScannerError)");
-			return "";
+		case ScannerError::InvalidUTF8InComment: return "Invalid UTF-8 sequence in comment.";
 	}
 }
 
@@ -319,6 +319,9 @@ Token Scanner::skipSingleLineComment()
 	if (unicodeDirectionError != ScannerError::NoError)
 		return setError(unicodeDirectionError);
 
+	if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition)))
+		return setError(ScannerError::InvalidUTF8InComment);
+
 	return Token::Whitespace;
 }
 
@@ -385,6 +388,8 @@ size_t Scanner::scanSingleLineDocComment()
 		advance();
 	}
 	literal.complete();
+	if (!util::validateUTF8(m_skippedComments[NextNext].literal))
+		setError(ScannerError::InvalidUTF8InComment);
 	return endPosition;
 }
 
@@ -404,6 +409,9 @@ Token Scanner::skipMultiLineComment()
 			ScannerError unicodeDirectionError = validateBiDiMarkup(m_source, startPosition);
 			if (unicodeDirectionError != ScannerError::NoError)
 				return setError(unicodeDirectionError);
+
+			if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition)))
+				return setError(ScannerError::InvalidUTF8InComment);
 
 			m_char = ' ';
 			return Token::Whitespace;
@@ -464,8 +472,9 @@ Token Scanner::scanMultiLineDocComment()
 	literal.complete();
 	if (!endFound)
 		return setError(ScannerError::IllegalCommentTerminator);
-	else
-		return Token::CommentLiteral;
+	if (!util::validateUTF8(m_skippedComments[NextNext].literal))
+		return setError(ScannerError::InvalidUTF8InComment);
+	return Token::CommentLiteral;
 }
 
 Token Scanner::scanSlash()
@@ -488,6 +497,8 @@ Token Scanner::scanSlash()
 			m_skippedComments[NextNext].location.sourceName = m_sourceName;
 			m_skippedComments[NextNext].token = Token::CommentLiteral;
 			m_skippedComments[NextNext].location.end = static_cast<int>(scanSingleLineDocComment());
+			if (m_skippedComments[NextNext].error != ScannerError::NoError)
+				return setError(m_skippedComments[NextNext].error);
 			return Token::Whitespace;
 		}
 		else

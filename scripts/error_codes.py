@@ -13,7 +13,7 @@ SOURCE_FILE_PATTERN = r"\b\d+_error\b"
 def read_file(file_name):
     content = None
     _, tail = path.split(file_name)
-    is_latin = tail == "invalid_utf8_sequence.sol"
+    is_latin = "invalid_utf8" in tail
     try:
         with open(file_name, "r", encoding="latin-1" if is_latin else ENCODING) as f:
             content = f.read()

@@ -159,7 +159,7 @@ if __name__ == '__main__':
             if 'compilationTests' in subdirs:
                 subdirs.remove('compilationTests')
             for f in files:
-                if basename(f) == "invalid_utf8_sequence.sol":
-                    continue  # ignore the test with broken utf-8 encoding
+                if "invalid_utf8" in basename(f):
+                    continue  # ignore tests with invalid utf-8 encoding
                 path = join(root, f)
                 extract_and_write(path, options.language)

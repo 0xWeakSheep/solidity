@@ -63,6 +63,8 @@ done < <(
       # Skipping the unicode tests as I couldn't adapt the lexical grammar to recursively counting RLO/LRO/PDF's.
       grep -v -E 'comments/.*_direction_override.*.sol' |
       grep -v -E 'literals/.*_direction_override.*.sol' |
+      # Skipping tests with invalid UTF-8 bytes that ANTLR cannot handle.
+      grep -v -E 'comments/.*invalid_utf8.*.sol' |
       # Skipping a test with "revert E;" because ANTLR cannot distinguish it from
       # a variable declaration.
       grep -v -E 'revertStatement/non_called.sol' |

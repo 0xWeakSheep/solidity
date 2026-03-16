@@ -151,6 +151,10 @@ ASTPointer<SourceUnit> Parser::parse(CharStream& _charStream)
 				solAssert(m_experimentalSolidityEnabledInCurrentSourceUnit);
 				nodes.push_back(parseTypeClassInstantiation());
 				break;
+			case Token::Illegal:
+				solAssert(m_scanner->currentError() != ScannerError::NoError, "Scanner returned illegal token without an error.");
+				fatalParserError(1605_error, to_string(m_scanner->currentError()));
+				break;
 			default:
 				if (
 					// Workaround because `error` is not a keyword.
