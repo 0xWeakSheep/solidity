@@ -476,7 +476,7 @@ Statement Parser::parseStatement()
 	}
 	case Token::Illegal:
 		solAssert(m_scanner->currentError() != ScannerError::NoError, "Scanner returned illegal token without an error.");
-		fatalParserError(1465_error, to_string(m_scanner->currentError()));
+		fatalParserError(1466_error, to_string(m_scanner->currentError()));
 		break;
 	default:
 		fatalParserError(6913_error, "Call or assignment expected.");
