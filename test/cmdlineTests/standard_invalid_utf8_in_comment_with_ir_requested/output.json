@@ -3,7 +3,7 @@
         {
             "component": "general",
             "errorCode": "1605",
-            "formattedMessage": "ParserError: Invalid UTF-8 sequence in comment.\n --> source.sol:1:3:\n  |\n1 | //\uFFFD\n  |   ^\n\n",
+            "formattedMessage": "Invalid UTF-8 sequence in comment.",
             "message": "Invalid UTF-8 sequence in comment.",
             "severity": "error",
             "sourceLocation": {

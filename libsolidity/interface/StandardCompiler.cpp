@@ -40,6 +40,7 @@
 #include <libsolutil/JSON.h>
 #include <libsolutil/Keccak256.h>
 #include <libsolutil/CommonData.h>
+#include <libsolutil/UTF8.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -72,7 +73,8 @@ Json formatError(
 	error["component"] = _component;
 	error["severity"] = Error::formatErrorSeverityLowercase(Error::errorSeverity(_type));
 	error["message"] = _message;
-	error["formattedMessage"] = (_formattedMessage.length() > 0) ? _formattedMessage : _message;
+	std::string const& fmtMsg = (_formattedMessage.length() > 0) ? _formattedMessage : _message;
+	error["formattedMessage"] = util::validateUTF8(fmtMsg) ? fmtMsg : _message;
 	if (_sourceLocation.is_object())
 		error["sourceLocation"] = _sourceLocation;
 	if (_secondarySourceLocation.is_array())
