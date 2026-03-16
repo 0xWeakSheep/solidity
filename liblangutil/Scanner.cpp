@@ -88,6 +88,7 @@ std::string to_string(ScannerError _errorCode)
 		case ScannerError::DirectionalOverrideMismatch: return "Mismatching directional override markers in comment or string literal.";
 		case ScannerError::InvalidUTF8InComment: return "Invalid UTF-8 sequence in comment.";
 	}
+	solAssert(false, "Unhandled case in to_string(ScannerError)");
 }
 
 
