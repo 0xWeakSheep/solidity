@@ -103,6 +103,12 @@ def extract_docs_cases(path, beginMarkers):
 def write_cases(f, solidityTests, yulTests):
     cleaned_filename = f.replace(".","_").replace("-","_").replace(" ","_").lower()
     for language, test in [("sol", t) for t in solidityTests] + [("yul", t) for t in yulTests]:
+        try:
+            test.encode("utf-8").decode("utf-8")
+        except UnicodeDecodeError:
+            print(f"Warning: Test case in {f} contains invalid UTF-8 characters, skipping.")
+            continue
+
         # When code examples are extracted they are indented by 8 spaces, which violates the style guide,
         # so before checking remove 4 spaces from each line.
         remainder = dedent(test)
