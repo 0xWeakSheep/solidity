@@ -1,4 +1,4 @@
-/**stuff รท stuff*/
+/**stuff ÿ stuff*/
 contract C {}
 // ----
-// ParserError 1605: (0-6): Invalid UTF-8 sequence in comment.
+// ParserError 1605: (0-18): Invalid UTF-8 sequence in comment.
