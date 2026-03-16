@@ -105,7 +105,7 @@ def write_cases(f, solidityTests, yulTests):
     for language, test in [("sol", t) for t in solidityTests] + [("yul", t) for t in yulTests]:
         try:
             test.encode("utf-8").decode("utf-8")
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, UnicodeEncodeError):
             print(f"Warning: Test case in {f} contains invalid UTF-8 characters, skipping.")
             continue
 
