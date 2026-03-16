@@ -108,7 +108,7 @@ def write_cases(f, solidityTests, yulTests):
         remainder = dedent(test)
         source_code_hash = hashlib.sha256(test.encode("utf-8")).hexdigest()
         sol_filename = f'test_{source_code_hash}_{cleaned_filename}.{language}'
-        with open(sol_filename, mode='w', encoding='utf8', newline='') as fi:
+        with open(sol_filename, mode='w', encoding='utf8', errors='surrogateescape', newline='') as fi:
             fi.write(remainder)
 
 def extract_and_write(path, language):
@@ -124,7 +124,7 @@ def extract_and_write(path, language):
             yulCases  = extract_yul_docs_cases(path)
     elif path.endswith('.sol'):
         if language in ("solidity", ""):
-            with open(path, mode='r', encoding='utf8', errors='ignore', newline='') as f:
+            with open(path, mode='r', encoding='utf8', errors='surrogateescape', newline='') as f:
                 cases = [f.read()]
     else:
         cases = extract_test_cases(path)
