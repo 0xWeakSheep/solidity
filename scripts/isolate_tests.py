@@ -108,7 +108,7 @@ def write_cases(f, solidityTests, yulTests):
         remainder = dedent(test)
         source_code_hash = hashlib.sha256(test.encode("utf-8")).hexdigest()
         sol_filename = f'test_{source_code_hash}_{cleaned_filename}.{language}'
-        with open(sol_filename, mode='w', encoding='utf8', errors='surrogateescape', newline='') as fi:
+        with open(sol_filename, mode='w', encoding='utf8', errors='replace', newline='') as fi:
             fi.write(remainder)
 
 def extract_and_write(path, language):
