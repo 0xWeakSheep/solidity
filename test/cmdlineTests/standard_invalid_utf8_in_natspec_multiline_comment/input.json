@@ -2,9 +2,9 @@
 	"language": "Solidity",
 	"sources":
 	{
-		"source.sol":
+		"source_invalid_utf8.sol":
 		{
-			"urls": ["source.sol"]
+			"urls": ["source_invalid_utf8.sol"]
 		}
 	},
 	"settings":
