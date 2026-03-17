@@ -3093,12 +3093,12 @@ void TypeChecker::endVisit(NewExpression const& _newExpression)
 std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess const& _memberAccess) const
 {
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
-	auto const& expressionObjectType = type(_memberAccess.expression());
-	auto const& memberName = _memberAccess.memberName();
+	Type const* owningObjectType = type(_memberAccess.expression());
+	ASTString const& memberName = _memberAccess.memberName();
 
 	// Retrieve the types of the arguments if this is used to call a function.
 	auto const& arguments = accessedMemberAnnotation.arguments;
-	MemberList::MemberMap possibleMembers = expressionObjectType->members(currentDefinitionScope()).membersByName(memberName);
+	MemberList::MemberMap possibleMembers = owningObjectType->members(currentDefinitionScope()).membersByName(memberName);
 	size_t const possibleMemberCountBeforeOverloading = possibleMembers.size();
 	if (possibleMemberCountBeforeOverloading > 1 && arguments)
 	{
@@ -3107,7 +3107,7 @@ std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess con
 		{
 			if (
 				it->type->category() == Type::Category::Function &&
-				!dynamic_cast<FunctionType const&>(*it->type).canTakeArguments(*arguments, expressionObjectType)
+				!dynamic_cast<FunctionType const&>(*it->type).canTakeArguments(*arguments, owningObjectType)
 			)
 				it = possibleMembers.erase(it);
 			else
@@ -3116,77 +3116,72 @@ std::optional<MemberList::Member> TypeChecker::resolveOverloads(MemberAccess con
 	}
 
 	if (possibleMembers.empty())
-		filterOutOverloadsNotMatchingArguments(_memberAccess, possibleMemberCountBeforeOverloading);
+	{
+		auto [errorId, errorMsg] = diagnoseUnresolvedMemberAccess(_memberAccess, possibleMemberCountBeforeOverloading);
+		m_errorReporter.fatalTypeError(errorId, _memberAccess.location(), errorMsg);
+	}
 	else if (possibleMembers.size() > 1)
 		m_errorReporter.fatalTypeError(
 			6675_error,
 			_memberAccess.location(),
 			"Member \"" + memberName + "\" not unique "
-			"after argument-dependent lookup in " + expressionObjectType->humanReadableName() +
+			"after argument-dependent lookup in " + owningObjectType->humanReadableName() +
 			(memberName == "value" ? " - did you forget the \"payable\" modifier?" : ".")
 		);
 	else
 		return possibleMembers.front();
 
-	return std::nullopt;
+	unreachable();
 }
 
-void TypeChecker::filterOutOverloadsNotMatchingArguments(
+std::pair<ErrorId, std::string> TypeChecker::diagnoseUnresolvedMemberAccess(
 	MemberAccess const& _memberAccess,
 	size_t const _possibleMemberCountBeforeOverloading
 ) const
 {
-	auto const& expressionObjectType = type(_memberAccess.expression());
-	auto const& memberName = _memberAccess.memberName();
+	Type const* owningObjectType = type(_memberAccess.expression());
+	ASTString const& memberName = _memberAccess.memberName();
 
-	auto reportError = [&](ErrorId _errorId, std::string _description)
-	{
-		m_errorReporter.fatalTypeError(
-			_errorId,
-			_memberAccess.location(),
-			_description
-		);
-	};
-
-	if (_possibleMemberCountBeforeOverloading == 0 && !dynamic_cast<ArraySliceType const*>(expressionObjectType))
+	if (_possibleMemberCountBeforeOverloading == 0 && !dynamic_cast<ArraySliceType const*>(owningObjectType))
 	{
 		// Try to see if the member was removed because it is only available for storage types.
 		auto storageType = TypeProvider::withLocationIfReference(
 			DataLocation::Storage,
-			expressionObjectType
+			owningObjectType
 		);
 		if (!storageType->members(currentDefinitionScope()).membersByName(memberName).empty())
-			reportError(4994_error,"Member \"" + memberName + "\" is not available in " +
-				expressionObjectType->humanReadableName() +
-				" outside of storage.");
+			return {
+				4994_error,
+				"Member \"" + memberName + "\" is not available in " + owningObjectType->humanReadableName() +
+				" outside of storage."
+			};
 	}
 
 	std::string errorMsg = "Member \"" + memberName + "\" not found or not visible "
-		"after argument-dependent lookup in " + expressionObjectType->humanReadableName() + ".";
+		"after argument-dependent lookup in " + owningObjectType->humanReadableName() + ".";
 
-	auto const errorCount = m_errorReporter.errorCount();
-	if (auto const* funType = dynamic_cast<FunctionType const*>(expressionObjectType))
+	if (auto const* funType = dynamic_cast<FunctionType const*>(owningObjectType))
 	{
 		TypePointers const& t = funType->returnParameterTypes();
 
 		if (memberName == "value")
 		{
 			if (funType->kind() == FunctionType::Kind::Creation)
-				reportError(
+				return {
 					8827_error,
 					"Constructor for " + t.front()->humanReadableName() +
-						" must be payable for member \"value\" to be available."
-				);
+					" must be payable for member \"value\" to be available."
+				};
 			else if (
 				funType->kind() == FunctionType::Kind::DelegateCall ||
 				funType->kind() == FunctionType::Kind::BareDelegateCall
 			)
-				reportError(
+				return {
 					8477_error,
 					"Member \"value\" is not allowed in delegated calls due to \"msg.value\" persisting."
-				);
+				};
 			else
-				reportError(8820_error, "Member \"value\" is only available for payable functions.");
+				return {8820_error, "Member \"value\" is only available for payable functions."};
 		}
 		else if (
 			t.size() == 1 && (
@@ -3194,9 +3189,9 @@ void TypeChecker::filterOutOverloadsNotMatchingArguments(
 				t.front()->category() == Type::Category::Contract
 			)
 		)
-			reportError(6005_error, errorMsg + " Did you intend to call the function?");
+			return {6005_error, errorMsg + " Did you intend to call the function?"};
 	}
-	else if (expressionObjectType->category() == Type::Category::Contract)
+	else if (owningObjectType->category() == Type::Category::Contract)
 	{
 		for (MemberList::Member const& addressMember: TypeProvider::payableAddress()->nativeMembers(nullptr))
 			if (addressMember.name == memberName)
@@ -3204,10 +3199,10 @@ void TypeChecker::filterOutOverloadsNotMatchingArguments(
 				auto const* var = dynamic_cast<Identifier const*>(&_memberAccess.expression());
 				std::string varName = var ? var->name() : "...";
 				errorMsg += " Use \"address(" + varName + ")." + memberName + "\" to access this address member.";
-				reportError(3125_error, errorMsg);
+				return {3125_error, errorMsg};
 			}
 	}
-	else if (auto const* addressType = dynamic_cast<AddressType const*>(expressionObjectType))
+	else if (auto const* addressType = dynamic_cast<AddressType const*>(owningObjectType))
 	{
 		// Trigger error when using `send` or `transfer` with a non-payable fallback function.
 		if (memberName == "send" || memberName == "transfer")
@@ -3217,18 +3212,17 @@ void TypeChecker::filterOutOverloadsNotMatchingArguments(
 				"Expected address not-payable as members were not found"
 			);
 
-			reportError(
+			return {
 				9862_error,
 				"\"send\" and \"transfer\" are only available for objects of type \"address payable\", not \""
-					+ expressionObjectType->humanReadableName() + "\"."
-			);
+					+ owningObjectType->humanReadableName() + "\"."
+			};
 		}
 	}
 
 	// If no detailed error were reported, issues a general unresolved member error.
 	// TODO: Consider merging `storage` member case from the top of this function with the rest of the checks.
-	if (errorCount == m_errorReporter.errorCount())
-		reportError(9582_error, errorMsg);
+	return {9582_error, errorMsg};
 }
 
 void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess) const
@@ -3236,22 +3230,22 @@ void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess)
 	auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(_memberAccess.annotation().type);
 	solAssert(accessedMemberFunctionType, "Expected function type.");
 
-	Type const* expressionObjectType = type(_memberAccess.expression());
-	solAssert(expressionObjectType);
+	Type const* owningObjectType = type(_memberAccess.expression());
+	solAssert(owningObjectType);
 
 	SourceLocation const& location = _memberAccess.location();
 	auto const& memberName = _memberAccess.memberName();
 
 	solAssert(
 		!accessedMemberFunctionType->hasBoundFirstArgument() ||
-		expressionObjectType->isImplicitlyConvertibleTo(*accessedMemberFunctionType->selfType()),
+		owningObjectType->isImplicitlyConvertibleTo(*accessedMemberFunctionType->selfType()),
 		"Function \"" + memberName + "\" cannot be called on an object of type " +
-		expressionObjectType->humanReadableName() +
+		owningObjectType->humanReadableName() +
 		" (expected " + accessedMemberFunctionType->selfType()->humanReadableName() + ")."
 	);
 
 	if (
-		dynamic_cast<FunctionType const*>(expressionObjectType) &&
+		dynamic_cast<FunctionType const*>(owningObjectType) &&
 		_memberAccess.annotation().referencedDeclaration == nullptr && // It's not defined
 		(memberName == "value" || memberName == "gas")
 	)
@@ -3264,7 +3258,7 @@ void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess)
 	if (
 		accessedMemberFunctionType->kind() == FunctionType::Kind::ArrayPush &&
 		_memberAccess.annotation().arguments && (*_memberAccess.annotation().arguments).numArguments() > 0 &&
-		expressionObjectType->containsNestedMapping()
+		owningObjectType->containsNestedMapping()
 	)
 		m_errorReporter.typeError(
 			8871_error,
@@ -3289,7 +3283,7 @@ void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess)
 bool TypeChecker::visit(MemberAccess const& _memberAccess)
 {
 	_memberAccess.expression().accept(*this);
-	Type const* expressionObjectType = type(_memberAccess.expression());
+	Type const* owningObjectType = type(_memberAccess.expression());
 	ASTString const& memberName = _memberAccess.memberName();
 
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
@@ -3309,7 +3303,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	{
 		// Update required lookup
 		if (!accessedMemberFunctionType->hasBoundFirstArgument())
-			if (auto typeType = dynamic_cast<TypeType const*>(expressionObjectType))
+			if (auto typeType = dynamic_cast<TypeType const*>(owningObjectType))
 			{
 				auto contractType = dynamic_cast<ContractType const*>(typeType->actualType());
 				if (contractType && contractType->isSuper())
@@ -3324,15 +3318,15 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	// It is going to be assigned to `accessedMemberAnnotation.isLValue` after the switch.
 	bool isAccessedMemberLValue = false;
 	// Switch through all possible categories of the expression object type.
-	switch (expressionObjectType->category())
+	switch (owningObjectType->category())
 	{
 	case Type::Category::Struct:
-		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(expressionObjectType)->dataStoredIn(DataLocation::CallData);
+		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(owningObjectType)->dataStoredIn(DataLocation::CallData);
 		break;
 	case Type::Category::Function:
 	{
 		if (
-			auto const* expressionObjectFunctionType = reinterpret_cast<FunctionType const*>(expressionObjectType);
+			auto const* expressionObjectFunctionType = reinterpret_cast<FunctionType const*>(owningObjectType);
 			expressionObjectFunctionType->hasDeclaration() &&
 			memberName == "selector"
 		)
@@ -3364,7 +3358,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	{
 		// TODO some members might be pure, but for example `address(0x123).balance` is not pure
 		// although every subexpression is, so leaving this limited for now.
-		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(expressionObjectType);
+		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(owningObjectType);
 		switch (expressionObjectTypeType->actualType()->category())
 		{
 		case Type::Category::Array:
@@ -3424,7 +3418,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	}
 	case Type::Category::Magic:
 	{
-		auto const* expressionObjectMagicType = reinterpret_cast<MagicType const*>(expressionObjectType);
+		auto const* expressionObjectMagicType = reinterpret_cast<MagicType const*>(owningObjectType);
 
 		switch (expressionObjectMagicType->kind())
 		{

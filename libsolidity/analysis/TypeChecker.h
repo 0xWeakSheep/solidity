@@ -203,7 +203,8 @@ private:
 	/// Collects and processes errors for member access operations where the member could not be resolved.
 	/// @param _memberAccess The member access expression where the unresolved member access occurred.
 	/// @param _possibleMemberCountBeforeOverloading The initial count of possible members before overloading resolution.
-	void filterOutOverloadsNotMatchingArguments(
+	/// @returns error id and error message.
+	std::pair<langutil::ErrorId, std::string>  diagnoseUnresolvedMemberAccess(
 		MemberAccess const& _memberAccess,
 		size_t _possibleMemberCountBeforeOverloading
 	) const;
