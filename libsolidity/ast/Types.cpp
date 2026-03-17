@@ -2771,7 +2771,6 @@ bool TupleType::operator==(Type const& _other) const
 			return false;
 
 		for (size_t i = 0; i < components().size(); ++i)
-		{
 			// Components can be null. I.e., when (int t, , ) = (i, 0, 0);
 			if (components()[i] && tupleType->components()[i])
 			{
@@ -2780,7 +2779,6 @@ bool TupleType::operator==(Type const& _other) const
 			}
 			else if (components()[i] != tupleType->components()[i])
 				return false;
-		}
 
 		return true;
 	}
