@@ -16,6 +16,8 @@ Bugfixes:
 * Yul: Fix incorrect serialization of Yul object names containing double quotes and escape sequences, producing output that could not be parsed as valid Yul.
 * Yul EVM Code Transform: Improve stack shuffler performance by fixing a BFS deduplication issue.
 * Parser: Fix a crash caused by invalid UTF-8 sequences in comments. Such sequences now produce a proper error message instead.
+* Parser: Fix a crash caused by unhandled ``Token::Illegal`` at the top level of Solidity source and inside Yul ``parseStatement``. Invalid tokens now produce a fatal parser error with a descriptive message.
+* Standard JSON: Fix invalid UTF-8 bytes in ``formattedMessage`` when a source location excerpt contains invalid UTF-8. The field now falls back to the plain message in that case.
 
 
 ### 0.8.34 (2026-02-18)
