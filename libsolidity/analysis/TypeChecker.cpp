@@ -3321,12 +3321,12 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	switch (owningObjectType->category())
 	{
 	case Type::Category::Struct:
-		isAccessedMemberLValue = !reinterpret_cast<StructType const*>(owningObjectType)->dataStoredIn(DataLocation::CallData);
+		isAccessedMemberLValue = !static_cast<StructType const*>(owningObjectType)->dataStoredIn(DataLocation::CallData);
 		break;
 	case Type::Category::Function:
 	{
 		if (
-			auto const* expressionObjectFunctionType = reinterpret_cast<FunctionType const*>(owningObjectType);
+			auto const* expressionObjectFunctionType = static_cast<FunctionType const*>(owningObjectType);
 			expressionObjectFunctionType->hasDeclaration() &&
 			memberName == "selector"
 		)
@@ -3358,7 +3358,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	{
 		// TODO some members might be pure, but for example `address(0x123).balance` is not pure
 		// although every subexpression is, so leaving this limited for now.
-		auto const* expressionObjectTypeType = reinterpret_cast<TypeType const*>(owningObjectType);
+		auto const* expressionObjectTypeType = static_cast<TypeType const*>(owningObjectType);
 		switch (expressionObjectTypeType->actualType()->category())
 		{
 		case Type::Category::Array:
@@ -3418,7 +3418,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	}
 	case Type::Category::Magic:
 	{
-		auto const* expressionObjectMagicType = reinterpret_cast<MagicType const*>(owningObjectType);
+		auto const* expressionObjectMagicType = static_cast<MagicType const*>(owningObjectType);
 
 		switch (expressionObjectMagicType->kind())
 		{
