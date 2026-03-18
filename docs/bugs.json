@@ -1,5 +1,18 @@
 [
     {
+        "uid": "SOL-2026-2",
+        "name": "CustomErrorNamedParametersEncodedInWrongOrder",
+        "summary": "Custom error arguments passed using named parameters are ABI-encoded in call order instead of declaration order when compiling via IR.",
+        "description": "When a custom error is instantiated using named parameters (e.g., `require(cond, MyError({b: 1, a: 2}))`), the IR-based code generator incorrectly encodes the arguments in the order they appear at the call site rather than in the order the parameters are declared in the error definition. This results in silently wrong ABI-encoded revert data, swapping argument values relative to their declared positions. The legacy pipeline is not affected.",
+        "link": "https://github.com/argotorg/solidity/issues/16452",
+        "introduced": "0.8.26",
+        "fixed": "0.8.35",
+        "severity": "medium",
+        "conditions": {
+            "viaIR": true
+        }
+    },
+    {
         "uid": "SOL-2026-1",
         "name": "TransientStorageClearingHelperCollision",
         "summary": "Clearing both storage and transient storage variables in the same contract may result in only one of these locations being cleared.",

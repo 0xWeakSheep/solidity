@@ -2001,18 +2001,21 @@
     },
     "0.8.26": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-05-21"
     },
     "0.8.27": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
         "released": "2024-09-04"
     },
     "0.8.28": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2020,6 +2023,7 @@
     },
     "0.8.29": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2041,6 +2045,7 @@
     },
     "0.8.30": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2048,6 +2053,7 @@
     },
     "0.8.31": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision",
             "LostStorageArrayWriteOnSlotOverflow"
         ],
@@ -2055,18 +2061,22 @@
     },
     "0.8.32": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision"
         ],
         "released": "2025-12-18"
     },
     "0.8.33": {
         "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder",
             "TransientStorageClearingHelperCollision"
         ],
         "released": "2025-12-18"
     },
     "0.8.34": {
-        "bugs": [],
+        "bugs": [
+            "CustomErrorNamedParametersEncodedInWrongOrder"
+        ],
         "released": "2026-02-18"
     },
     "0.8.4": {
