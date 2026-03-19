@@ -491,17 +491,47 @@ Type const* FunctionDefinition::type() const
 	return TypeProvider::function(*this, FunctionType::Kind::Internal);
 }
 
-Type const* FunctionDefinition::typeViaContractName() const
+Type const* FunctionDefinition::typeViaContractName(ContractNameAccessKind _accessKind) const
 {
-	if (libraryFunction())
+	switch (_accessKind)
 	{
-		if (isPublic())
-			return FunctionType(*this).asExternallyCallableFunction(true);
-		else
-			return TypeProvider::function(*this, FunctionType::Kind::Internal);
+		case ContractNameAccessKind::Local:
+		{
+			solAssert(!libraryFunction(), "Library member cannot be accessed from local/deriving scope");
+			solAssert(visibility() > Visibility::Private, "Private non-library member is not visible via contract type name");
+
+			if (!Declaration::isVisibleInContract() || !isImplemented())
+				// If is external or has no implementation, it cannot be called using contract type name. In case of accessing
+				// via contract type name, only declaration is available, to be used in non calling context. I.e. to access
+				// function selector `C.foo.selector` where foo has external visibility.
+				return TypeProvider::function(*this, FunctionType::Kind::Declaration);
+			else
+				// If call is in local (or deriving) scope, function is visible in contract (non-external) and it has an
+				// implementation, internal call is used.
+				return type();
+		}
+		case ContractNameAccessKind::Foreign:
+		{
+			solAssert(!libraryFunction(), "Library members can only be accessed via library name.");
+			solAssert(isVisibleViaContractInstance(), "Externally invisible member accessed via contract name.");
+			// Foreign contract member function being accessed via contract type name, cannot be called.
+			return TypeProvider::function(*this, FunctionType::Kind::Declaration);
+		}
+		case ContractNameAccessKind::Library:
+		{
+			// Private library members can be accessed in context of `using` statement.
+			solAssert(libraryFunction(), "Non-library members cannot be accessed via library name.");
+			// In case of library contract, member call kind depends on its visibility.
+			if (isPublic())
+				// When Lib.foo is public or external, an external call (delegate call) is used.
+				return FunctionType(*this).asExternallyCallableFunction(true);
+			else
+				// For private or internal visibility, internal call is used.
+				return type();
+		}
+		default:
+			solAssert(false, "Unimplemented contract member access kind.");
 	}
-	else
-		return TypeProvider::function(*this, FunctionType::Kind::Declaration);
 }
 
 std::string FunctionDefinition::externalSignature() const
@@ -952,7 +982,7 @@ FunctionType const* UnaryOperation::userDefinedFunctionType() const
 	FunctionDefinition const* userDefinedFunction = *annotation().userDefinedFunction;
 	return dynamic_cast<FunctionType const*>(
 		userDefinedFunction->libraryFunction() ?
-		userDefinedFunction->typeViaContractName() :
+		userDefinedFunction->typeViaContractName(Declaration::ContractNameAccessKind::Library) :
 		userDefinedFunction->type()
 	);
 }
@@ -965,7 +995,7 @@ FunctionType const* BinaryOperation::userDefinedFunctionType() const
 	FunctionDefinition const* userDefinedFunction = *annotation().userDefinedFunction;
 	return dynamic_cast<FunctionType const*>(
 		userDefinedFunction->libraryFunction() ?
-		userDefinedFunction->typeViaContractName() :
+		userDefinedFunction->typeViaContractName(Declaration::ContractNameAccessKind::Library) :
 		userDefinedFunction->type()
 	);
 }
