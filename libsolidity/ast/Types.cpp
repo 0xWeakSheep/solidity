@@ -3990,7 +3990,7 @@ MemberList::MemberMap TypeType::nativeMembers(ASTNode const* _currentScope) cons
 				}
 				else if (
 					(contract.isLibrary() && declaration->isVisibleAsLibraryMember()) ||
-					declaration->isVisibleViaContractTypeAccess()
+					declaration->isVisibleViaContractInstance()
 				)
 					members.emplace_back(declaration, declaration->typeViaContractName());
 			}
