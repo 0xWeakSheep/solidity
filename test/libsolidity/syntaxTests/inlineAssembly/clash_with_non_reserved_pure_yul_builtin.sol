@@ -9,7 +9,7 @@ contract C {
     }
 }
 // ----
-// Warning 5470: (207-232): "memoryguard" will be promoted to Yul reserved identifier in the next breaking version and will not be allowed anymore as an identifier.
-// Warning 5470: (265-276): "memoryguard" will be promoted to Yul reserved identifier in the next breaking version and will not be allowed anymore as an identifier.
-// Warning 5470: (318-329): "memoryguard" will be promoted to Yul reserved identifier in the next breaking version and will not be allowed anymore as an identifier.
-// Warning 5470: (358-369): "memoryguard" will be promoted to Yul reserved identifier in the next breaking version and will not be allowed anymore as an identifier.
+// Warning 5470: (207-232): "memoryguard" will be promoted to Yul reserved identifier in the future and will not be allowed anymore as an identifier.
+// Warning 5470: (265-276): "memoryguard" will be promoted to Yul reserved identifier in the future and will not be allowed anymore as an identifier.
+// Warning 5470: (318-329): "memoryguard" will be promoted to Yul reserved identifier in the future and will not be allowed anymore as an identifier.
+// Warning 5470: (358-369): "memoryguard" will be promoted to Yul reserved identifier in the future and will not be allowed anymore as an identifier.
