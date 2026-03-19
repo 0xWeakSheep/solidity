@@ -569,7 +569,7 @@ bool DeclarationRegistrationHelper::registerDeclaration(
 			6335_error,
 			_declaration.location(),
 			fmt::format(
-				"\"{}\" will be promoted to keyword in the next breaking version"
+				"\"{}\" will be promoted to keyword in the future"
 				" and will not be allowed as an identifier anymore.",
 				name
 			)
