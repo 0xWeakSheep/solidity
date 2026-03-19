@@ -3319,8 +3319,47 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	switch (owningObjectType->category())
 	{
 	case Type::Category::Struct:
+	{
 		isAccessedMemberLValue = !static_cast<StructType const*>(owningObjectType)->dataStoredIn(DataLocation::CallData);
+
+		if (
+			auto const* accessedVariableDeclaration =
+				dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration)
+		)
+		{
+			accessedMemberAnnotation.isPure =
+				*_memberAccess.expression().annotation().isPure ||
+				accessedVariableDeclaration->isConstant(); // It is always false. See below.
+
+			solUnimplementedAssert(
+				!accessedVariableDeclaration->isConstant(),
+				"Constant struct members are not yet implemented."
+			);
+		}
+		else if (dynamic_cast<FunctionDefinition const*>(accessedMemberAnnotation.referencedDeclaration))
+		{
+			solAssert(accessedMemberAnnotation.type->category() == Type::Category::Function);
+			auto const* accessedMemberFunctionType = static_cast<FunctionType const*>(accessedMemberAnnotation.type);
+			// It is not possible to define a function inside a struct definition, but a library function can be
+			// attached to a struct with the `using` keyword. In this case the function invoke kind can be only
+			// `internal` or `delegate`.
+			solAssert(
+				accessedMemberFunctionType->kind() == FunctionType::Kind::Internal ||
+				accessedMemberFunctionType->kind() == FunctionType::Kind::DelegateCall,
+				"Impossible function call kind for struct type member."
+			);
+
+			// When struct is constant its members are also constant.
+			accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
+		}
+		else
+			solAssert(
+				false,
+				"Struct must have all members defined and they must be variables declarations or functions definitions"
+			);
+
 		break;
+	}
 	case Type::Category::Function:
 	{
 		if (
