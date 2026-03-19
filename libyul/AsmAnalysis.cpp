@@ -967,7 +967,7 @@ void AsmAnalyzer::warnIfFutureKeywordOrReservedIdentifier(YulName _identifier, l
 			5470_error,
 			_location,
 			fmt::format(
-				"\"{}\" will be promoted to Yul {} in the next breaking version "
+				"\"{}\" will be promoted to Yul {} in the future "
 				"and will not be allowed anymore as an identifier.",
 				_identifier.str(),
 				(TokenTraits::isFutureYulKeyword(_identifier.str()) ? "keyword" : "reserved identifier")
