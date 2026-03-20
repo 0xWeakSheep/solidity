@@ -3540,6 +3540,46 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 				"\"codehash\" is not supported by the VM version."
 			);
 		break;
+	// Contract instance case
+	case Type::Category::Contract:
+	{
+		solAssert(
+			accessedMemberAnnotation.type->category() == Type::Category::Function,
+			"Via contract instance only a function or a variable getter can be accessed."
+		);
+		// When contract is constant its members are also constant.
+		accessedMemberAnnotation.isPure = *_memberAccess.expression().annotation().isPure;
+
+		// Below only the sanity checks.
+		if (dynamic_cast<FunctionDefinition const*>(accessedMemberAnnotation.referencedDeclaration))
+		{
+			auto const* accessedMemberFunctionType = static_cast<FunctionType const*>(accessedMemberAnnotation.type);
+			// In case when an internal library function is attached to a contract, the function invoke kind can be
+			// `Internal` or `DelegateCall`. It depends on the function declaration in the library.
+			solAssert(
+				accessedMemberFunctionType->kind() == FunctionType::Kind::Internal ||
+				accessedMemberFunctionType->kind() == FunctionType::Kind::External ||
+				accessedMemberFunctionType->kind() == FunctionType::Kind::DelegateCall,
+				"Impossible function call kind for contract type member."
+			);
+		}
+		else if (dynamic_cast<VariableDeclaration const*>(accessedMemberAnnotation.referencedDeclaration))
+		{
+			// If a constant variable of contract type (owning expression) is pure, then the accessed member is pure.
+			// Note: It does not matter that the being accessed declaration is constant, because when accessing via
+			// a contract instance we always have a getter function but not the variable itself. Moreover, the getter of
+			// a constant variable contained by non-constant contract should not be constant.
+			auto const* accessedMemberFunctionType = static_cast<FunctionType const*>(accessedMemberAnnotation.type);
+			solAssert(
+				accessedMemberFunctionType->kind() == FunctionType::Kind::External,
+				"Impossible function call kind for contract type member."
+			);
+		}
+		else
+			solAssert(false, "Invalid declaration type for contract instance member.");
+
+		break;
+	}
 	// Empty cases.
 	case Type::Category::Integer:
 	case Type::Category::RationalNumber:
