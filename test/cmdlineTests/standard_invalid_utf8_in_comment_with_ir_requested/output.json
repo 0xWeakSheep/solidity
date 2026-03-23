@@ -9,7 +9,7 @@
             "sourceLocation": {
                 "end": 3,
                 "file": "source_invalid_utf8.sol",
-                "start": 2
+                "start": 0
             },
             "type": "ParserError"
         }
