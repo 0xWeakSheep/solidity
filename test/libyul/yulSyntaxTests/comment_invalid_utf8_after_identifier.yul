@@ -1,4 +1,4 @@
 { x //ÿ
 }
 // ----
-// ParserError 1466: (6-7): Invalid UTF-8 sequence in comment.
+// ParserError 1466: (4-7): Invalid UTF-8 sequence in comment.

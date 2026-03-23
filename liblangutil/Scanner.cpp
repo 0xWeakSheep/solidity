@@ -320,12 +320,8 @@ Token Scanner::skipSingleLineComment()
 	if (unicodeDirectionError != ScannerError::NoError)
 		return setError(unicodeDirectionError);
 
-	size_t invalidPos;
-	if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition), invalidPos))
-	{
-		m_tokens[NextNext].location.start = static_cast<int>(startPosition + invalidPos);
+	if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition)))
 		return setError(ScannerError::InvalidUTF8InComment);
-	}
 
 	return Token::Whitespace;
 }
@@ -415,12 +411,8 @@ Token Scanner::skipMultiLineComment()
 			if (unicodeDirectionError != ScannerError::NoError)
 				return setError(unicodeDirectionError);
 
-			size_t invalidPos;
-			if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition), invalidPos))
-			{
-				m_tokens[NextNext].location.start = static_cast<int>(startPosition + invalidPos);
+			if (!util::validateUTF8(m_source.source().substr(startPosition, m_source.position() - startPosition)))
 				return setError(ScannerError::InvalidUTF8InComment);
-			}
 
 			m_char = ' ';
 			return Token::Whitespace;
