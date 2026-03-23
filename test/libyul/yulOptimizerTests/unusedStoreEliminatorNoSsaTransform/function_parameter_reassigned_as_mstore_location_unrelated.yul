@@ -13,7 +13,6 @@
 // step: unusedStoreEliminatorNoSsaTransform
 //
 // {
-//     { }
 //     function f(arg)
 //     {
 //         let b := arg

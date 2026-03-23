@@ -18,12 +18,15 @@
 // step: unusedStoreEliminatorNoSsaTransform
 //
 // {
-//     { }
 //     function direct(arg, value)
-//     { sstore(arg, add(value, 1)) }
+//     {
+//         let v1 := add(value, 1)
+//         sstore(arg, v1)
+//     }
 //     function indirect(arg_1, value_2)
 //     {
 //         let loc := arg_1
-//         sstore(loc, add(value_2, 1))
+//         let value1 := add(value_2, 1)
+//         sstore(loc, value1)
 //     }
 // }

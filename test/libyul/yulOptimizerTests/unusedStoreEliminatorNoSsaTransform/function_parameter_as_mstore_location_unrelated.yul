@@ -13,13 +13,11 @@
 // step: unusedStoreEliminatorNoSsaTransform
 //
 // {
-//     { }
 //     function f(arg)
 //     {
 //         let a := add(arg, 32)
 //         let b := arg
 //         let outLen := 32
-//         let _2 := 0xAA
 //         return(b, outLen)
 //     }
 // }
