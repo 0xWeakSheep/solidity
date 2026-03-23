@@ -3221,7 +3221,6 @@ std::pair<ErrorId, std::string> TypeChecker::diagnoseUnresolvedMemberAccess(
 	}
 
 	// If no detailed error were reported, issues a general unresolved member error.
-	// TODO: Consider merging `storage` member case from the top of this function with the rest of the checks.
 	return {9582_error, errorMsg};
 }
 
@@ -3257,7 +3256,8 @@ void TypeChecker::checkAccessedMemberFunction(MemberAccess const& _memberAccess)
 
 	if (
 		accessedMemberFunctionType->kind() == FunctionType::Kind::ArrayPush &&
-		_memberAccess.annotation().arguments && (*_memberAccess.annotation().arguments).numArguments() > 0 &&
+		_memberAccess.annotation().arguments &&
+		(*_memberAccess.annotation().arguments).numArguments() > 0 &&
 		owningObjectType->containsNestedMapping()
 	)
 		m_errorReporter.typeError(
@@ -3289,17 +3289,17 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	auto& accessedMemberAnnotation = _memberAccess.annotation();
 	// TODO: Explain. `isConstant` is never `true`?
 	accessedMemberAnnotation.isConstant = false;
-	auto const maybePossibleMember = resolveOverloads(_memberAccess);
-	if (!maybePossibleMember)
+	auto const possibleMember = resolveOverloads(_memberAccess);
+	if (!possibleMember)
 		return false;
 
-	accessedMemberAnnotation.referencedDeclaration = (*maybePossibleMember).declaration;
-	accessedMemberAnnotation.type = (*maybePossibleMember).type;
+	accessedMemberAnnotation.referencedDeclaration = (*possibleMember).declaration;
+	accessedMemberAnnotation.type = (*possibleMember).type;
 
 	// Lookup type required to find the function declaration.
 	VirtualLookup requiredLookup = VirtualLookup::Static;
 
-	if (auto accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
+	if (auto const* accessedMemberFunctionType = dynamic_cast<FunctionType const*>(accessedMemberAnnotation.type))
 	{
 		// Update required lookup
 		if (!accessedMemberFunctionType->hasBoundFirstArgument())
@@ -3315,9 +3315,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 
 	accessedMemberAnnotation.requiredLookup = requiredLookup;
 
-	// It is going to be assigned to `accessedMemberAnnotation.isLValue` after the switch.
 	bool isAccessedMemberLValue = false;
-	// Switch through all possible categories of the expression object type.
 	switch (owningObjectType->category())
 	{
 	case Type::Category::Struct:
