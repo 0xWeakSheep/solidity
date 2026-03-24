@@ -243,7 +243,7 @@ private:
 		int bestDeficit = 0; // Only consider positive deficits
 
 		// Iterate through all slots on the stack that can be DUPed
-		for (StackOffset offset: _state.stackDupReachableRange() | ranges::views::reverse)
+		for (StackOffset const offset: _state.stackDupReachableRange() | ranges::views::reverse)
 		{
 			Slot const& slot = _stack[offset];
 
@@ -254,12 +254,12 @@ private:
 			// Calculate deficit: how many more of this slot do we need?
 			// Uses the deficit of slots which we need to produce more of based on usage counts in liveness.
 			// Prioritizes slots that need more copies to be consumed down the line.
-			int currentCount = static_cast<int>(_state.count(slot));
+			int const currentCount = static_cast<int>(_state.count(slot));
 
 			int liveOutCount = 0;
 			if (slot.isValueID() && _state.target().liveOut.contains(slot.valueID()))
 				liveOutCount = static_cast<int>(_state.target().liveOut.count(slot.valueID()));
-			int deficit = liveOutCount - currentCount;
+			int const deficit = liveOutCount - currentCount;
 
 			// Update best if this deficit is higher
 			if (deficit > bestDeficit)
@@ -386,28 +386,28 @@ private:
 				)
 				{
 					// try swapping it with something in the tail that also fixes the top
-					for (StackOffset offset: _state.stackTailRange())
+					for (StackOffset const offset: _state.stackTailRange())
 						if (_stack.isValidSwapTarget(offset) && _state.isArgsCompatible(offset, stackTop))
 						{
 							_stack.swap(offset);
 							return true;
 						}
 					// otherwise try swapping it with something that needs to go into args
-					for (StackOffset offset: _state.stackTailRange())
+					for (StackOffset const offset: _state.stackTailRange())
 						if (_stack.isValidSwapTarget(offset) && _state.countInArgs(_stack[offset]) < _state.targetArgsCount(_stack[offset]))
 						{
 							_stack.swap(offset);
 							return true;
 						}
 					// otherwise try swapping it with something that can be popped
-					for (StackOffset offset: _state.stackTailRange())
+					for (StackOffset const offset: _state.stackTailRange())
 						if (_stack.isValidSwapTarget(offset) && _stack.canBeFreelyGenerated(_stack[offset]) && !_stack[offset].isLiteralValueID())
 						{
 							_stack.swap(offset);
 							return true;
 						}
 					// otherwise try swapping it with a literal
-					for (StackOffset offset: _state.stackTailRange())
+					for (StackOffset const offset: _state.stackTailRange())
 						if (_stack.isValidSwapTarget(offset) && _stack[offset].isLiteralValueID())
 						{
 							_stack.swap(offset);
@@ -417,7 +417,7 @@ private:
 				// try finding a slot that is compatible with the top and also admits the current top:
 				//		- could be that the top slot is used elsewhere in the args (exclude junk)
 				//		- could be that the top slot is something that is only required in the tail
-				for (StackOffset offset: _state.stackArgsRange())
+				for (StackOffset const offset: _state.stackArgsRange())
 					if (
 						offset != stackTop &&
 						_stack[offset] != _stack[stackTop] &&  // don't swap identical values (no-op)
@@ -432,7 +432,7 @@ private:
 					}
 
 				// try finding a slot in args that wants to have the top, swap that
-				for (StackOffset offset: _state.stackArgsRange())
+				for (StackOffset const offset: _state.stackArgsRange())
 					if (
 						offset != stackTop &&
 						_stack[offset] != _stack[stackTop] &&  // don't swap identical values (no-op)
@@ -446,7 +446,7 @@ private:
 					}
 
 				// try swapping top with a tail slot that has what we need at top
-				for (StackOffset tailOffset: _state.stackTailRange())
+				for (StackOffset const tailOffset: _state.stackTailRange())
 					if (
 						_stack.isValidSwapTarget(tailOffset) &&
 						_state.isArgsCompatible(tailOffset, stackTop) &&
@@ -464,7 +464,7 @@ private:
 			}
 
 			// swap up any slot in args that is out of position and has a slot available in args that it can occupy
-			for (StackOffset offset: _state.stackArgsRange())
+			for (StackOffset const offset: _state.stackArgsRange())
 			{
 				bool const reachable = _stack.isValidSwapTarget(offset);
 				bool const identical = _state.isArgsCompatible(offset, stackTop) && !_state.targetArbitrary(stackTop);
@@ -478,7 +478,7 @@ private:
 				)
 				{
 					// for each `targetOffset` in target args, see if we can't swap the out of position `offset` to `targetOffset`
-					for (StackOffset targetOffset: _state.stackArgsRange())
+					for (StackOffset const targetOffset: _state.stackArgsRange())
 						if (
 							targetOffset != offset &&  // we shouldn't be looking at the very same offset
 							_stack.isValidSwapTarget(targetOffset) &&  // the target offset should be within reach
@@ -589,7 +589,7 @@ private:
 	static bool fixTailSlot(Stack<Callback>& _stack, detail::State const& _state)
 	{
 		yulAssert(_stack.size() <= _state.target().size, "this method assumes that the stack isn't exceeding target size");
-		for (StackOffset offset: _state.stackArgsRange() | ranges::views::reverse)
+		for (StackOffset const offset: _state.stackArgsRange() | ranges::views::reverse)
 		{
 			Slot const& slotAtOffset = _stack[offset];
 			if (
@@ -608,7 +608,7 @@ private:
 				}
 
 				// find the lowest swappable slot in tail that needs to go to args, swap
-				for (StackOffset tailOffset: _state.stackTailRange())
+				for (StackOffset const tailOffset: _state.stackTailRange())
 				{
 					auto const& slotAtTailOffset = _stack[tailOffset];
 					if (
@@ -627,7 +627,7 @@ private:
 					}
 				}
 				// find the lowest swappable slot in tail that can be popped but is no literal, swap
-				for (StackOffset tailOffset: _state.stackTailRange())
+				for (StackOffset const tailOffset: _state.stackTailRange())
 					if (
 						_stack.isValidSwapTarget(tailOffset) &&
 						_stack.canBeFreelyGenerated(_stack[tailOffset]) &&
@@ -642,7 +642,7 @@ private:
 						return true;
 					}
 				// find the lowest swappable slot in tail that is a literal, swap
-				for (StackOffset tailOffset: _state.stackTailRange())
+				for (StackOffset const tailOffset: _state.stackTailRange())
 					if (
 						_stack.isValidSwapTarget(tailOffset) &&
 						_stack[tailOffset].isLiteralValueID()
@@ -701,7 +701,7 @@ private:
 		{
 			if (_state.requiredInArgs(_stack[stackTop]))
 			{
-				for (StackOffset argsOffset: _state.stackArgsRange())
+				for (StackOffset const argsOffset: _state.stackArgsRange())
 					if (
 						_stack[argsOffset] != _stack[stackTop] &&  // don't swap identical values (no-op)
 						_stack.isValidSwapTarget(argsOffset) &&
@@ -731,7 +731,7 @@ private:
 				}
 
 				// if we need it down there, try to swap down
-				for (StackOffset tailOffset: _state.stackTailRange() | ranges::views::reverse)
+				for (StackOffset const tailOffset: _state.stackTailRange() | ranges::views::reverse)
 					if (
 						_stack[tailOffset] != _stack[stackTop] &&  // don't swap identical values (no-op)
 						_stack.isValidSwapTarget(tailOffset) &&  // we can reach the offset
@@ -744,7 +744,7 @@ private:
 			}
 		}
 		// pop junk (but not if JUNK is exactly what's needed at that position)
-		for (StackOffset offset: _state.stackSwapReachableRange())
+		for (StackOffset const offset: _state.stackSwapReachableRange())
 			if (_stack[offset].isJunk() && !_state.isArgsCompatible(offset, offset))
 			{
 				if (offset != stackTop && _stack[offset] != _stack[stackTop])
@@ -755,7 +755,7 @@ private:
 
 		// pop something that can be freely generated except for literals
 		// (but not if it's already in a compatible position)
-		for (StackOffset offset: _state.stackSwapReachableRange())
+		for (StackOffset const offset: _state.stackSwapReachableRange())
 			if (
 				_stack.canBeFreelyGenerated(_stack[offset]) &&
 				!_stack[offset].isLiteralValueID() &&
@@ -769,7 +769,7 @@ private:
 			}
 
 		// pop anything that isn't in position and we have more than one of
-		for (StackOffset offset: _state.stackSwapReachableRange())
+		for (StackOffset const offset: _state.stackSwapReachableRange())
 			if (_state.count(_stack[offset]) > _state.targetMinCount(_stack[offset]))
 			{
 				if (offset != stackTop && _stack[offset] != _stack[stackTop])
@@ -778,7 +778,7 @@ private:
 				return true;
 			}
 		// pop anything that can be freely generated
-		for (StackOffset offset: _state.stackSwapReachableRange())
+		for (StackOffset const offset: _state.stackSwapReachableRange())
 			if (_stack.canBeFreelyGenerated(_stack[offset]))
 			{
 				if (offset != stackTop && _stack[offset] != _stack[stackTop])

@@ -123,7 +123,7 @@ experimental::Type TypeSystemHelpers::tupleType(std::vector<Type> _elements) con
 	if (_elements.size() == 1)
 		return _elements.front();
 	Type result = _elements.back();
-	for (Type type: _elements | ranges::views::reverse | ranges::views::drop_exactly(1))
+	for (Type const type: _elements | ranges::views::reverse | ranges::views::drop_exactly(1))
 		result = typeSystem.type(PrimitiveType::Pair, {type, result});
 	return result;
 }
@@ -132,7 +132,7 @@ std::vector<experimental::Type> TypeSystemHelpers::destTupleType(Type _tupleType
 {
 	if (!isTypeConstant(_tupleType))
 		return {_tupleType};
-	TypeConstructor pairConstructor = typeSystem.constructor(PrimitiveType::Pair);
+	TypeConstructor const pairConstructor = typeSystem.constructor(PrimitiveType::Pair);
 	auto [constructor, arguments] = destTypeConstant(_tupleType);
 	if (constructor == typeSystem.constructor(PrimitiveType::Unit))
 		return {};
@@ -165,7 +165,7 @@ experimental::Type TypeSystemHelpers::sumType(std::vector<Type> _elements) const
 	if (_elements.size() == 1)
 		return _elements.front();
 	Type result = _elements.back();
-	for (Type type: _elements | ranges::views::reverse | ranges::views::drop_exactly(1))
+	for (Type const type: _elements | ranges::views::reverse | ranges::views::drop_exactly(1))
 		result = typeSystem.type(PrimitiveType::Sum, {type, result});
 	return result;
 }
@@ -174,7 +174,7 @@ std::vector<experimental::Type> TypeSystemHelpers::destSumType(Type _tupleType) 
 {
 	if (!isTypeConstant(_tupleType))
 		return {_tupleType};
-	TypeConstructor sumConstructor = typeSystem.constructor(PrimitiveType::Sum);
+	TypeConstructor const sumConstructor = typeSystem.constructor(PrimitiveType::Sum);
 	auto [constructor, arguments] = destTypeConstant(_tupleType);
 	if (constructor == typeSystem.constructor(PrimitiveType::Void))
 		return {};

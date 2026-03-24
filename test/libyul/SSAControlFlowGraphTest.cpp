@@ -61,7 +61,7 @@ SSAControlFlowGraphTest::SSAControlFlowGraphTest(std::string const& _filename): 
 
 TestCase::TestResult SSAControlFlowGraphTest::run(std::ostream& _stream, std::string const& _linePrefix, bool const _formatted)
 {
-	YulStack yulStack = parseYul(m_source);
+	YulStack const yulStack = parseYul(m_source);
 	solUnimplementedAssert(yulStack.parserResult()->subObjects.empty(), "Tests with subobjects not supported.");
 
 	if (yulStack.hasErrors())
@@ -76,7 +76,7 @@ TestCase::TestResult SSAControlFlowGraphTest::run(std::ostream& _stream, std::st
 		yulStack.parserResult()->code()->root(),
 		true
 	);
-	ssa::ControlFlowLiveness liveness(*controlFlow);
+	ssa::ControlFlowLiveness const liveness(*controlFlow);
 	m_obtainedResult = controlFlow->toDot(&liveness);
 
 	auto result = checkResult(_stream, _linePrefix, _formatted);

@@ -129,7 +129,7 @@ TypeInference::GlobalAnnotation& solidity::frontend::experimental::detail::Annot
 Analysis::AnnotationContainer& Analysis::annotationContainer(ASTNode const& _node)
 {
 	solAssert(_node.id() > 0);
-	size_t id = static_cast<size_t>(_node.id());
+	size_t const id = static_cast<size_t>(_node.id());
 	solAssert(id <= m_maxAstId);
 	return m_annotations[id];
 }
@@ -137,7 +137,7 @@ Analysis::AnnotationContainer& Analysis::annotationContainer(ASTNode const& _nod
 Analysis::AnnotationContainer const& Analysis::annotationContainer(ASTNode const& _node) const
 {
 	solAssert(_node.id() > 0);
-	size_t id = static_cast<size_t>(_node.id());
+	size_t const id = static_cast<size_t>(_node.id());
 	solAssert(id <= m_maxAstId);
 	return m_annotations[id];
 }

@@ -1,0 +1,16 @@
+---
+Checks: '-*,misc-const-correctness'
+WarningsAsErrors: ''
+CheckOptions:
+  - key: misc-const-correctness.AnalyzeValues
+    value: true
+  - key: misc-const-correctness.AnalyzeReferences
+    value: true
+  - key: misc-const-correctness.WarnPointersAsValues
+    value: false
+  - key: misc-const-correctness.TransformValues
+    value: true
+  - key: misc-const-correctness.TransformReferences
+    value: true
+  - key: misc-const-correctness.TransformPointersAsValues
+    value: false

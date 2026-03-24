@@ -86,7 +86,7 @@ CodeTransform::FunctionLabels CodeTransform::registerFunctionLabels(
 	{
 		if (!_function)
 			continue;
-		bool nameAlreadySeen = !assignedFunctionNames.insert(_function->name).second;
+		bool const nameAlreadySeen = !assignedFunctionNames.insert(_function->name).second;
 		auto const sourceID = [&]() -> std::optional<std::size_t> {
 			if (_functionGraph->debugInfo && _functionGraph->debugInfo->graphDebugData)
 				return _functionGraph->debugInfo->graphDebugData->astID;
@@ -316,7 +316,7 @@ void CodeTransform::operator()(SSACFG::BlockId const& _currentBlock, SSACFG::Bas
 
 	{
 		// restore stack to previous state once zero-path is handled
-		ScopedSaveAndRestore restoreStack(m_stackData, StackData(m_stackData));
+		ScopedSaveAndRestore const restoreStack(m_stackData, StackData(m_stackData));
 		yulAssert(m_stackLayout[_conditionalJump.zero]);
 
 		// transform stack to a state in which we can jump to the zero branch
