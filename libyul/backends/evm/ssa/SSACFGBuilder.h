@@ -86,17 +86,10 @@ public:
 	SSACFG::ValueId operator()(Literal const& _literal);
 
 private:
-	void cleanUnreachable();
-	SSACFG::ValueId tryRemoveTrivialPhi(SSACFG::ValueId _phi);
 	void assign(std::vector<std::reference_wrapper<Scope::Variable const>> _variables, Expression const* _expression);
 	std::vector<SSACFG::ValueId> visitFunctionCall(FunctionCall const& _call);
 	void registerFunctionDefinition(FunctionDefinition const& _functionDefinition);
 	void buildFunctionGraph(Scope::Function const* _function, FunctionDefinition const* _functionDefinition);
-	// performs path compression on substitution chains: phi1->phi2->literal becomes phi1->literal
-	SSACFG::ValueId canonicalize(SSACFG::ValueId _v);
-	// replaces phi references in operation inputs, block exits, and upsilon values with their final substitution
-	// targets in a single pass over the graph, after all trivial phi removals are complete
-	void applyPhiSubstitutions();
 
 	SSACFG::ValueId zero();
 	SSACFG::ValueId readVariable(Scope::Variable const& _variable, SSACFG::BlockId _block);
@@ -143,20 +136,6 @@ private:
 		Scope::Variable const*,
 		std::vector<SSACFG::ValueId>
 	> m_currentDef;
-
-	/// Values of upsilons targeting phi_id: m_upsilonValuesForPhi[phi_id] = {upsilon1, upsilon2, ...},
-	/// populated by calls to `emitUpsilon`
-	std::vector<std::vector<SSACFG::ValueId>> m_upsilonValuesForPhi;
-
-	/// phi_id -> canonical replacement (empty/default if not yet substituted)
-	std::vector<SSACFG::ValueId> m_phiSubstitution;
-
-	/// phi_id -> block IDs that contain upsilons targeting this phi
-	std::vector<std::vector<SSACFG::BlockId>> m_phiTargetBlocks;
-
-	/// phi_id -> phis whose upsilon values include this phi_id, e.g.:
-	/// m_reversePhiUpsilonValues[phi_A] = {phi_X, phi_Y, ...}; phi_X and phi_Y have upsilons whose value is phi_A
-	std::vector<std::vector<SSACFG::ValueId>> m_reversePhiUpsilonValues;
 
 	struct ForLoopInfo {
 		SSACFG::BlockId breakBlock;
