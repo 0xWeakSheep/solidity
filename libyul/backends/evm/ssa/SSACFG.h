@@ -33,6 +33,8 @@
 #include <libsolutil/Numeric.h>
 
 #include <range/v3/view/map.hpp>
+
+#include <concepts>
 #include <deque>
 #include <functional>
 #include <list>
@@ -113,7 +115,8 @@ public:
 		/// They record the phi pre-images for successor blocks.
 		std::vector<Upsilon> upsilons;
 		std::variant<MainExit, Jump, ConditionalJump, FunctionReturn, Terminated> exit = MainExit{};
-		template<typename Callable>
+
+		template<std::invocable<BlockId> Callable>
 		void forEachExit(Callable&& _callable) const
 		{
 			if (auto* jump = std::get_if<Jump>(&exit))

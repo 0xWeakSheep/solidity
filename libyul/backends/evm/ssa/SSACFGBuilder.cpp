@@ -20,7 +20,9 @@
  */
 
 #include <libyul/backends/evm/ssa/SSACFGBuilder.h>
-#include <libyul/backends/evm/ssa/SSACFGTrivialPhiEliminator.h>
+
+#include <libyul/backends/evm/ssa/transform/TrivialPhiEliminator.h>
+#include <libyul/backends/evm/ssa/transform/UnreachableBlockCleaner.h>
 
 #include <libyul/backends/evm/ssa/ControlFlow.h>
 
@@ -87,7 +89,8 @@ std::unique_ptr<ControlFlow> SSACFGBuilder::build(
 	if (!builder.blockInfo(builder.m_currentBlock).sealed)
 		builder.sealBlock(builder.m_currentBlock);
 	mainGraph.block(builder.m_currentBlock).exit = SSACFG::BasicBlock::MainExit{};
-	eliminateTrivialPhis(mainGraph);
+	transform::cleanUnreachableBlocks(mainGraph);
+	transform::eliminateTrivialPhis(mainGraph);
 	return controlFlow;
 }
 
@@ -136,7 +139,8 @@ void SSACFGBuilder::buildFunctionGraph(
 	cfg.exits.insert(builder.m_currentBlock);
 	// Artificial explicit function exit (`leave`) at the end of the body.
 	builder(Leave{debugDataOf(*_functionDefinition)});
-	eliminateTrivialPhis(cfg);
+	transform::cleanUnreachableBlocks(cfg);
+	transform::eliminateTrivialPhis(cfg);
 }
 
 void SSACFGBuilder::operator()(ExpressionStatement const& _expressionStatement)

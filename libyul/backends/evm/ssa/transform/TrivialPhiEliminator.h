@@ -16,7 +16,7 @@
 */
 // SPDX-License-Identifier: GPL-3.0
 /**
- * Removes trivial phis and unreachable blocks from an SSA CFG.
+ * Removes trivial phis from an SSA CFG.
  *
  * A phi is trivial if all its upsilon operands provide the same value (modulo self-references).
  * Removal may cascade: eliminating one trivial phi can make others trivial.
@@ -28,7 +28,10 @@ namespace solidity::yul::ssa
 
 class SSACFG;
 
-/// Removes unreachable blocks and trivial phis from the SSA CFG
+namespace transform
+{
+/// Removes trivial phis from the SSA CFG
 void eliminateTrivialPhis(SSACFG& _cfg);
+}
 
 }

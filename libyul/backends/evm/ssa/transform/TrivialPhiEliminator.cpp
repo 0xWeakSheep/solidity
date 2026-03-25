@@ -16,11 +16,10 @@
 */
 // SPDX-License-Identifier: GPL-3.0
 
-#include <libyul/backends/evm/ssa/SSACFGTrivialPhiEliminator.h>
+#include <libyul/backends/evm/ssa/transform/TrivialPhiEliminator.h>
 
 #include <libyul/backends/evm/ssa/SSACFG.h>
 
-#include <libsolutil/Algorithms.h>
 #include <libsolutil/Visitor.h>
 
 #include <range/v3/algorithm/any_of.hpp>
@@ -54,7 +53,7 @@ struct TrivialPhiEliminator
 
 	void run()
 	{
-		cleanUnreachable();
+		cleanUnreachableUpsilons();
 		buildIndices();
 		substituteDeadPhis();
 
@@ -71,39 +70,12 @@ struct TrivialPhiEliminator
 	}
 
 private:
-	void cleanUnreachable()
+	void cleanUnreachableUpsilons()
 	{
-		util::BreadthFirstSearch<SSACFG::BlockId> reachabilityCheck{{cfg.entry}};
-		reachabilityCheck.run([&](SSACFG::BlockId _blockId, auto&& _addChild) {
-			auto const& block = cfg.block(_blockId);
-			visit(util::GenericVisitor{
-				[&](SSACFG::BasicBlock::Jump const& _jump) { _addChild(_jump.target); },
-				[&](SSACFG::BasicBlock::ConditionalJump const& _jump) {
-					_addChild(_jump.zero);
-					_addChild(_jump.nonZero);
-				},
-				[](SSACFG::BasicBlock::FunctionReturn const&) {},
-				[](SSACFG::BasicBlock::Terminated const&) {},
-				[](SSACFG::BasicBlock::MainExit const&) {}
-			}, block.exit);
-		});
-
-		for (SSACFG::BlockId blockId: reachabilityCheck.visited)
-		{
-			auto& block = cfg.block(blockId);
-			std::erase_if(block.entries, [&](auto const& entry) {
-				return !reachabilityCheck.visited.contains(entry);
-			});
-		}
-
 		for (SSACFG::BlockId blockId{0}; blockId.value < cfg.numBlocks(); ++blockId.value)
-		{
-			auto& block = cfg.block(blockId);
-			bool const isReachable = reachabilityCheck.visited.contains(blockId);
-			std::erase_if(block.upsilons, [&](SSACFG::Upsilon const& u) {
-				return !isReachable || u.value.isUnreachable();
+			std::erase_if(cfg.block(blockId).upsilons, [](SSACFG::Upsilon const& u) {
+				return u.value.isUnreachable();
 			});
-		}
 	}
 
 	void buildIndices()
@@ -279,7 +251,7 @@ private:
 
 }
 
-void ssa::eliminateTrivialPhis(SSACFG& _cfg)
+void transform::eliminateTrivialPhis(SSACFG& _cfg)
 {
 	TrivialPhiEliminator(_cfg).run();
 }
